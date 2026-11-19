@@ -1,4 +1,4 @@
-"""Strict validation for the Stage 1 JSON project format."""
+"""Strict validator for the Stage 2 JSON project format."""
 from pathlib import Path
 import math
 
@@ -6,9 +6,12 @@ TOP_KEYS = {"version", "project", "scenes"}
 PROJECT_KEYS = {"width", "height", "fps", "duration", "background"}
 SCENE_KEYS = {"id", "start", "duration", "elements"}
 ELEMENT_KEYS = {
-    "text": {"type", "text", "x", "y", "font_size", "color", "font"},
-    "rect": {"type", "x", "y", "width", "height", "color"},
+    "text": {"type", "text", "x", "y", "font_size", "color", "font", "animations"},
+    "rect": {"type", "x", "y", "width", "height", "color", "animations"},
 }
+ANIMATION_KEYS = {"property", "from", "to", "start", "duration", "easing"}
+ANIMATABLE = {"x", "y", "scale", "rotation", "opacity"}
+EASINGS = {"linear", "ease_in", "ease_out", "ease_in_out"}
 COLORS = {"black", "white", "red", "green", "blue", "yellow", "transparent"}
 
 
@@ -27,13 +30,13 @@ def _keys(obj, allowed, required, where):
         raise ProjectValidationError(f"{where} has unsupported keys: {', '.join(sorted(extra))}")
 
 
-def _number(value, name, minimum=None):
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ProjectValidationError(f"{name} must be a number")
-    if not math.isfinite(value):
-        raise ProjectValidationError(f"{name} must be finite")
+def _number(value, name, minimum=None, maximum=None):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise ProjectValidationError(f"{name} must be a finite number")
     if minimum is not None and value < minimum:
         raise ProjectValidationError(f"{name} must be >= {minimum}")
+    if maximum is not None and value > maximum:
+        raise ProjectValidationError(f"{name} must be <= {maximum}")
 
 
 def _color(value, name):
@@ -50,7 +53,6 @@ def validate_project(data, project_dir=None):
     _keys(data, TOP_KEYS, TOP_KEYS, "root")
     if data["version"] != 1:
         raise ProjectValidationError("version must be 1")
-
     p = data["project"]
     _keys(p, PROJECT_KEYS, PROJECT_KEYS, "project")
     for key in ("width", "height", "fps"):
@@ -58,7 +60,7 @@ def validate_project(data, project_dir=None):
         if int(p[key]) != p[key]:
             raise ProjectValidationError(f"project.{key} must be an integer")
     if p["width"] > 1920 or p["height"] > 1920:
-        raise ProjectValidationError("Stage 1 maximum width and height is 1920")
+        raise ProjectValidationError("maximum width and height is 1920")
     _number(p["duration"], "project.duration", 0.04)
     _color(p["background"], "project.background")
     if not isinstance(data["scenes"], list) or not data["scenes"]:
@@ -86,7 +88,7 @@ def validate_project(data, project_dir=None):
             etype = element.get("type")
             if etype not in ELEMENT_KEYS:
                 raise ProjectValidationError(f"{ewhere}.type must be text or rect")
-            required = ELEMENT_KEYS[etype] - {"font"}
+            required = ELEMENT_KEYS[etype] - {"font", "animations"}
             _keys(element, ELEMENT_KEYS[etype], required, ewhere)
             for key in ("x", "y"):
                 _number(element[key], f"{ewhere}.{key}")
@@ -94,7 +96,7 @@ def validate_project(data, project_dir=None):
             if etype == "text":
                 if not isinstance(element["text"], str):
                     raise ProjectValidationError(f"{ewhere}.text must be a string")
-                _number(element["font_size"], f"{ewhere}.font_size", 1)
+                _number(element["font_size"], f"{ewhere}.font_size", 1, 512)
                 if "font" in element:
                     if not isinstance(element["font"], str):
                         raise ProjectValidationError(f"{ewhere}.font must be a string path")
@@ -107,5 +109,30 @@ def validate_project(data, project_dir=None):
                             raise ProjectValidationError(f"{ewhere}.font file not found")
             else:
                 for key in ("width", "height"):
-                    _number(element[key], f"{ewhere}.{key}", 1)
+                    _number(element[key], f"{ewhere}.{key}", 1, 1920)
+            animations = element.get("animations", [])
+            if not isinstance(animations, list):
+                raise ProjectValidationError(f"{ewhere}.animations must be an array")
+            animated_properties = set()
+            for k, animation in enumerate(animations):
+                awhere = f"{ewhere}.animations[{k}]"
+                _keys(animation, ANIMATION_KEYS, ANIMATION_KEYS, awhere)
+                prop = animation["property"]
+                if prop not in ANIMATABLE:
+                    raise ProjectValidationError(f"{awhere}.property must be one of {', '.join(sorted(ANIMATABLE))}")
+                if prop in animated_properties:
+                    raise ProjectValidationError(f"{awhere}: duplicate animation property {prop}")
+                animated_properties.add(prop)
+                _number(animation["from"], f"{awhere}.from")
+                _number(animation["to"], f"{awhere}.to")
+                _number(animation["start"], f"{awhere}.start", 0)
+                _number(animation["duration"], f"{awhere}.duration", 0.001)
+                if animation["start"] + animation["duration"] > scene["duration"] + 1e-6:
+                    raise ProjectValidationError(f"{awhere} extends beyond its scene")
+                if animation["easing"] not in EASINGS:
+                    raise ProjectValidationError(f"{awhere}.easing must be one of {', '.join(sorted(EASINGS))}")
+                if prop == "scale" and (animation["from"] <= 0 or animation["to"] <= 0):
+                    raise ProjectValidationError(f"{awhere}: scale values must be positive")
+                if prop == "opacity" and (not 0 <= animation["from"] <= 1 or not 0 <= animation["to"] <= 1):
+                    raise ProjectValidationError(f"{awhere}: opacity values must be between 0 and 1")
     return True
