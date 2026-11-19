@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from cosmo_engine import __version__
+from cosmo_engine.ai import AIGenerationError, ProjectGenerator
 from cosmo_engine.encoder import encode_frames
 from cosmo_engine.audio import mux_audio
 from cosmo_engine.renderer import render_frame
@@ -41,25 +42,60 @@ def load_project(path):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cosmo", description="Cosmo Motion Engine — Stage 5")
+    parser = argparse.ArgumentParser(
+        prog="cosmo", description="Cosmo Motion Engine — Stage 6"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("info", help="show engine information")
+
     validate_cmd = sub.add_parser("validate", help="validate a JSON project")
     validate_cmd.add_argument("project")
+
     render_cmd = sub.add_parser("render", help="render a JSON project to MP4")
     render_cmd.add_argument("project")
     render_cmd.add_argument("--output", default="output/render.mp4")
+
+    generate_cmd = sub.add_parser("generate", help="generate a project JSON from a text prompt")
+    generate_cmd.add_argument("--prompt", required=True)
+    generate_cmd.add_argument("--output", default="projects/generated/project.json")
+    generate_cmd.add_argument("--provider", choices=("auto", "gemini", "groq"), default="auto")
+    generate_cmd.add_argument("--width", type=int, default=1080)
+    generate_cmd.add_argument("--height", type=int, default=1920)
+    generate_cmd.add_argument("--fps", type=int, default=30)
+    generate_cmd.add_argument("--duration", type=float, default=20)
+
     args = parser.parse_args()
 
     try:
         if args.command == "info":
-            print(f"Cosmo Motion Engine {__version__} | Stage 5")
-            print("Python + Pillow + FFmpeg | JSON projects | sequential rendering")
+            print(f"Cosmo Motion Engine {__version__} | Stage 6")
+            print("Python + Pillow + FFmpeg | JSON projects | Gemini + Groq")
             return 0
-        project, project_dir = load_project(args.project) if args.command in ("validate", "render") else (None, None)
+
+        if args.command == "generate":
+            project, provider = ProjectGenerator().generate(
+                args.prompt,
+                provider=args.provider,
+                width=args.width,
+                height=args.height,
+                fps=args.fps,
+                duration=args.duration,
+            )
+            output = Path(args.output).expanduser().resolve()
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(
+                json.dumps(project, ensure_ascii=False, indent=2) + "\\n",
+                encoding="utf-8",
+            )
+            print(f"Generated and validated with {provider}: {output}")
+            print("Next: python main.py render " + str(output))
+            return 0
+
+        project, project_dir = load_project(args.project)
         if args.command == "validate":
             print("Project is valid.")
             return 0
+
         if args.command == "render":
             if shutil.which("ffmpeg") is None:
                 raise RuntimeError("FFmpeg was not found on PATH. Install it first.")
