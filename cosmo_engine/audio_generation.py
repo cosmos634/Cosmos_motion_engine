@@ -87,6 +87,8 @@ def create_audio_tracks(project, project_dir):
         if index == 0 or start >= duration:
             continue
         effect_duration = min(0.75, duration - start)
+        if effect_duration < 0.001:
+            continue
         tracks.append({
             "kind": "sfx", "source": str(whoosh_path.relative_to(project_dir)),
             "start": start, "duration": effect_duration, "volume": 0.24,
