@@ -129,3 +129,8 @@ The first AI stage generates text and rectangle layers only. Real image, video, 
 The Visual Director selects a visual style for each generated video and applies renderer-compatible motion design. Supported styles: cinematic documentary, modern motion graphics, social media, historical documentary, and scientific visualization. It adds slow Ken Burns movement to image layers, staggered title entrances, and restrained accent graphics without adding heavy runtime dependencies.
 
 See [docs/STAGE8_VISUAL_DIRECTOR.md](docs/STAGE8_VISUAL_DIRECTOR.md).
+
+
+## Stage 8.2 — Professional Composition
+
+The Visual Director now builds editorial title cards from native rectangle and text layers: a translucent title panel, a style-colored vertical accent, a Russian section label, and a scene counter. These additions use the existing project schema and renderer, animate with the existing opacity track, and remain safe for sequential low-memory rendering.
