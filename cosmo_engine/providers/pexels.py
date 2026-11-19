@@ -31,11 +31,20 @@ class PexelsProvider(BaseProvider):
                 author_url = item.get("photographer_url", "")
                 width, height, duration = item.get("width", 0), item.get("height", 0), 0
             else:
-                candidates = [f for f in item.get("video_files", []) if f.get("file_type") == "video/mp4" and f.get("link")]
-                candidates.sort(key=lambda f: (f.get("width", 0), f.get("height", 0)))
+                candidates = [
+                    f for f in item.get("video_files", [])
+                    if f.get("file_type") == "video/mp4" and f.get("link")
+                ]
                 if not candidates:
                     continue
-                chosen = candidates[0]
+                suitable = [
+                    f for f in candidates
+                    if max(f.get("width", 0), f.get("height", 0)) <= 1920
+                ]
+                chosen = max(
+                    suitable or candidates,
+                    key=lambda f: f.get("width", 0) * f.get("height", 0),
+                )
                 url = chosen["link"]
                 thumb = item.get("image", "")
                 author = item.get("user", {}).get("name", "")
