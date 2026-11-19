@@ -13,7 +13,8 @@ from cosmo_engine.audio import mux_audio
 from cosmo_engine.audio_generation import create_audio_tracks
 from cosmo_engine.renderer import render_frame
 from cosmo_engine.validator import ProjectValidationError, validate_project
-from cosmo_engine.visual_design import add_visual_background\nfrom cosmo_engine.visual_director import apply_visual_direction
+from cosmo_engine.visual_design import add_visual_background
+from cosmo_engine.visual_director import apply_visual_direction
 
 
 def _resolve_asset(source, project_dir, label):
