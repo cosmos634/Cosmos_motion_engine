@@ -10,6 +10,7 @@ from cosmo_engine import __version__
 from cosmo_engine.ai import AIGenerationError, ProjectGenerator
 from cosmo_engine.encoder import encode_frames
 from cosmo_engine.audio import mux_audio
+from cosmo_engine.audio_generation import create_audio_tracks
 from cosmo_engine.renderer import render_frame
 from cosmo_engine.validator import ProjectValidationError, validate_project
 from cosmo_engine.visual_design import add_visual_background
@@ -65,6 +66,7 @@ def main():
     generate_cmd.add_argument("--fps", type=int, default=30)
     generate_cmd.add_argument("--duration", type=float, default=20)
     generate_cmd.add_argument("--no-visuals", action="store_true", help="skip automatic stock background search")
+    generate_cmd.add_argument("--no-audio", action="store_true", help="skip automatic Russian narration and soundtrack")
 
     args = parser.parse_args()
 
@@ -89,6 +91,13 @@ def main():
                 visual_status = add_visual_background(project, args.prompt, output.parent)
                 print(visual_status)
                 validate_project(project, output.parent)
+            if not args.no_audio:
+                audio_tracks, audio_warnings = create_audio_tracks(project, output.parent)
+                if audio_tracks:
+                    project["audio"] = audio_tracks
+                    validate_project(project, output.parent)
+                for warning in audio_warnings:
+                    print(f"Audio warning: {warning}")
             output.write_text(
                 json.dumps(project, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
