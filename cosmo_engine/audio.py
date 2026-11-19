@@ -16,8 +16,7 @@ def build_audio_command(video_path, tracks, output_path, project_duration):
         label = f"a{index - 1}"
         duration = float(track["duration"])
         chain = [
-            f"[{index}:a]",
-            f"atrim=duration={duration:.6f}",
+            f"[{index}:a]atrim=duration={duration:.6f}",
             "asetpts=PTS-STARTPTS",
             f"volume={float(track['volume']):.6f}",
         ]
