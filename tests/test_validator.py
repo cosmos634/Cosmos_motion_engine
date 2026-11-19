@@ -52,7 +52,6 @@ class ValidatorTests(unittest.TestCase):
         with self.assertRaises(ProjectValidationError):
             validate_project({**VALID, "scenes": [scene]})
 
-
     def test_valid_audio_track(self):
         track = {
             "kind": "narration", "source": "voice.wav", "start": 0,
@@ -76,6 +75,26 @@ class ValidatorTests(unittest.TestCase):
         }
         with self.assertRaises(ProjectValidationError):
             validate_project({**VALID, "audio": [track]})
+
+    def test_valid_scene_transition(self):
+        scene = {**VALID["scenes"][0], "transition_in": {
+            "type": "wipe", "duration": 0.5, "direction": "left"
+        }}
+        self.assertTrue(validate_project({**VALID, "scenes": [scene]}))
+
+    def test_invalid_transition_type_rejected(self):
+        scene = {**VALID["scenes"][0], "transition_in": {
+            "type": "spin", "duration": 0.5
+        }}
+        with self.assertRaises(ProjectValidationError):
+            validate_project({**VALID, "scenes": [scene]})
+
+    def test_invalid_transition_direction_rejected(self):
+        scene = {**VALID["scenes"][0], "transition_in": {
+            "type": "slide", "duration": 0.5, "direction": "diagonal"
+        }}
+        with self.assertRaises(ProjectValidationError):
+            validate_project({**VALID, "scenes": [scene]})
 
 
 if __name__ == "__main__":
