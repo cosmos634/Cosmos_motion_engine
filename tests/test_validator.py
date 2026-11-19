@@ -31,6 +31,27 @@ class ValidatorTests(unittest.TestCase):
         with self.assertRaises(ProjectValidationError):
             validate_project(data)
 
+    def test_valid_animation_track(self):
+        scene = {**VALID["scenes"][0], "elements": [{
+            "type": "rect", "x": 0, "y": 0, "width": 50, "height": 40,
+            "color": "red", "animations": [{
+                "property": "x", "from": 0, "to": 100, "start": 0,
+                "duration": 1, "easing": "ease_out"
+            }]
+        }]}
+        self.assertTrue(validate_project({**VALID, "scenes": [scene]}))
+
+    def test_invalid_animation_easing_rejected(self):
+        scene = {**VALID["scenes"][0], "elements": [{
+            "type": "rect", "x": 0, "y": 0, "width": 50, "height": 40,
+            "color": "red", "animations": [{
+                "property": "x", "from": 0, "to": 100, "start": 0,
+                "duration": 1, "easing": "bounce"
+            }]
+        }]}
+        with self.assertRaises(ProjectValidationError):
+            validate_project({**VALID, "scenes": [scene]})
+
 
 if __name__ == "__main__":
     unittest.main()
