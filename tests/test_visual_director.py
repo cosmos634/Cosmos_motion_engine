@@ -42,7 +42,11 @@ class VisualDirectorTests(unittest.TestCase):
         apply_visual_direction(project, "cinematic")
         self.assertEqual(len(project["scenes"][0]["elements"]), first_count)
         image = project["scenes"][0]["elements"][0]
-        self.assertEqual(\n            {animation["property"] for animation in image["animations"]},\n            {"scale", "x", "y"},\n        )\n        self.assertEqual(len(image["animations"]), 3)
+        self.assertEqual(
+            {animation["property"] for animation in image["animations"]},
+            {"scale", "x", "y"},
+        )
+        self.assertEqual(len(image["animations"]), 3)
 
     def test_preserves_existing_animation_properties(self):
         project = sample_project()
