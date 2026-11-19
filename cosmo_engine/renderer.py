@@ -42,4 +42,4 @@ def render_frame(project, frame_index):
                     font = ImageFont.load_default()
                 draw.text((int(element["x"]), int(element["y"])), element["text"],
                           fill=color, font=font)
-    return image.convert("RGB)
+    return image.convert("RGB")
