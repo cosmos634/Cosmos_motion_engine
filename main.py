@@ -90,7 +90,9 @@ def main():
             if not args.no_visuals:
                 visual_status = add_visual_background(project, args.prompt, output.parent)
                 print(visual_status)
-                validate_project(project, output.parent)
+            selected_style = apply_visual_direction(project, args.prompt)
+            print(f"Visual direction: {selected_style}")
+            validate_project(project, output.parent)
             if not args.no_audio:
                 audio_tracks, audio_warnings = create_audio_tracks(project, output.parent)
                 if audio_tracks:
