@@ -129,7 +129,7 @@ def validate_project(data, project_dir=None):
                         _number(element[key], f"{ewhere}.{key}", 1, 1920)
                 if element.get("fit", "contain") not in {"contain", "cover", "stretch"}:
                     raise ProjectValidationError(f"{ewhere}.fit must be contain, cover, or stretch")
-            else:
+            elif etype != "image":
                 _color(element["color"], f"{ewhere}.color")
             if etype == "text":
                 if not isinstance(element["text"], str):
