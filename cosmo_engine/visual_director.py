@@ -53,8 +53,10 @@ def apply_visual_direction(project, prompt=""):
         for image_index, image in enumerate(images):
             _add_animation(image, "scale", 1.0, profile["zoom"], duration, "ease_in_out")
             direction = -1 if (scene_index + image_index) % 2 else 1
-            base_x = image.get("x", 0)
+            base_x = image.get("x", 0) - round(width * (profile["zoom"] - 1) / 2)
+            base_y = image.get("y", 0) - round(height * (profile["zoom"] - 1) / 2)
             _add_animation(image, "x", base_x, base_x + direction * profile["pan"], duration, "linear")
+            _add_animation(image, "y", base_y, base_y - direction * round(profile["pan"] * 0.55), duration, "linear")
 
         texts = [item for item in elements if item.get("type") == "text"]
         if not texts:
