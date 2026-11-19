@@ -95,3 +95,8 @@ A successful local test suite does not replace a real FFmpeg render test on the 
 ## License
 
 No license has been selected yet. Until one is added, do not assume the repository grants permission to reuse its code.
+
+
+### Stage 5.3 — Video layers
+
+Video elements are decoded sequentially with persistent FFmpeg readers and composited per frame. They support project-relative sources, clip start/duration, source seek, contain/cover/stretch fitting, transforms, opacity, and existing animation tracks. The encoder closes decoder processes after each render.
