@@ -177,6 +177,6 @@ class ProjectGenerator:
                 if abs(settings["duration"] - duration) > 0.001:
                     raise AIGenerationError("AI returned an incorrect project duration")
                 return project, name
-            except (AIProviderError, AIGenerationError, ProjectValidationError, KeyError, TypeError) as exc:
+            except Exception as exc:
                 errors.append(f"{name}: {exc}")
         raise AIGenerationError("All AI providers failed: " + "; ".join(errors))
