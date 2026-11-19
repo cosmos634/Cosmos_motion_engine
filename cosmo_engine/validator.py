@@ -132,6 +132,13 @@ def validate_project(data, project_dir=None):
                         _number(element[key], f"{ewhere}.{key}", 1, 1920)
                 if element.get("fit", "contain") not in {"contain", "cover", "stretch"}:
                     raise ProjectValidationError(f"{ewhere}.fit must be contain, cover, or stretch")
+                if etype == "video":
+                    if not isinstance(element["id"], str) or not element["id"]:
+                        raise ProjectValidationError(f"{ewhere}.id must be a non-empty string")
+                    _number(element.get("start", 0), f"{ewhere}.start", 0)
+                    if "duration" in element:
+                        _number(element["duration"], f"{ewhere}.duration", 0.001)
+                    _number(element.get("source_start", 0), f"{ewhere}.source_start", 0)
             elif etype not in {"image", "video"}:
                 _color(element["color"], f"{ewhere}.color")
             if etype == "text":
