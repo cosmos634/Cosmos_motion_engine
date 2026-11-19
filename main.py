@@ -8,6 +8,7 @@ from pathlib import Path
 
 from cosmo_engine import __version__
 from cosmo_engine.encoder import encode_frames
+from cosmo_engine.audio import mux_audio
 from cosmo_engine.renderer import render_frame
 from cosmo_engine.validator import ProjectValidationError, validate_project
 
@@ -19,6 +20,13 @@ def load_project(path):
     except json.JSONDecodeError as exc:
         raise ProjectValidationError(f"invalid JSON: {exc}") from exc
     validate_project(data, path.parent)
+    for track in data.get("audio", []):
+        source = (path.parent / track["source"]).resolve()
+        if path.parent not in source.parents and source != path.parent:
+            raise ProjectValidationError("audio source path escapes project directory")
+        if not source.is_file():
+            raise ProjectValidationError("audio source file not found: " + track["source"])
+        track["source"] = str(source)
     for scene in data["scenes"]:
         for element in scene["elements"]:
             if element.get("font"):
@@ -27,7 +35,7 @@ def load_project(path):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cosmo", description="Cosmo Motion Engine — Stage 2")
+    parser = argparse.ArgumentParser(prog="cosmo", description="Cosmo Motion Engine — Stage 3")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("info", help="show engine information")
     validate_cmd = sub.add_parser("validate", help="validate a JSON project")
@@ -39,7 +47,7 @@ def main():
 
     try:
         if args.command == "info":
-            print(f"Cosmo Motion Engine {__version__} | Stage 2")
+            print(f"Cosmo Motion Engine {__version__} | Stage 3")
             print("Python + Pillow + FFmpeg | JSON projects | sequential rendering")
             return 0
         project, project_dir = load_project(args.project) if args.command in ("validate", "render") else (None, None)
@@ -52,8 +60,19 @@ def main():
             output = Path(args.output).expanduser().resolve()
             output.parent.mkdir(parents=True, exist_ok=True)
             frames = math.ceil(project["project"]["duration"] * project["project"]["fps"])
-            encode_frames(project, frames, output, render_frame)
-            print(f"Rendered {frames} frames: {output}")
+            tracks = project.get("audio", [])
+            if tracks:
+                temp_video = output.with_name(output.stem + ".video_tmp.mp4")
+                try:
+                    encode_frames(project, frames, temp_video, render_frame)
+                    mux_audio(temp_video, tracks, output, project["project"]["duration"])
+                finally:
+                    if temp_video.exists():
+                        temp_video.unlink()
+                print(f"Rendered {frames} frames with {len(tracks)} audio track(s): {output}")
+            else:
+                encode_frames(project, frames, output, render_frame)
+                print(f"Rendered {frames} frames: {output}")
             return 0
     except (OSError, ValueError, RuntimeError) as exc:
         print(f"Error: {exc}", file=sys.stderr)
