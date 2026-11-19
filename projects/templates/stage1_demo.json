@@ -19,7 +19,11 @@
           "y": 90,
           "width": 500,
           "height": 180,
-          "color": "#202D50"
+          "color": "#202D50",
+          "animations": [
+            {"property": "scale", "from": 0.85, "to": 1, "start": 0, "duration": 0.8, "easing": "ease_out"},
+            {"property": "opacity", "from": 0, "to": 1, "start": 0, "duration": 0.7, "easing": "ease_in_out"}
+          ]
         },
         {
           "type": "text",
@@ -27,15 +31,23 @@
           "x": 105,
           "y": 145,
           "font_size": 28,
-          "color": "#FFFFFF"
+          "color": "#FFFFFF",
+          "animations": [
+            {"property": "x", "from": 35, "to": 105, "start": 0.1, "duration": 1, "easing": "ease_out"},
+            {"property": "opacity", "from": 0, "to": 1, "start": 0.1, "duration": 0.8, "easing": "ease_in_out"}
+          ]
         },
         {
           "type": "text",
-          "text": "Stage 1 - Core renderer",
+          "text": "Stage 2 - Animation engine",
           "x": 180,
           "y": 205,
           "font_size": 18,
-          "color": "#55DDF5"
+          "color": "#55DDF5",
+          "animations": [
+            {"property": "y", "from": 235, "to": 205, "start": 0.5, "duration": 0.9, "easing": "ease_out"},
+            {"property": "opacity", "from": 0, "to": 1, "start": 0.5, "duration": 0.8, "easing": "linear"}
+          ]
         }
       ]
     }
