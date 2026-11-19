@@ -4,7 +4,9 @@ A lightweight, JSON-driven video renderer designed for Python 3 and Android/Term
 
 ## Development status
 
-**Stage 1 — core rendering (in progress):** strict project validation, a small Pillow frame renderer, sequential raw-frame streaming to FFmpeg, CLI validation/rendering, and a test project.
+**Stage 1 — core rendering: complete.** Strict JSON validation, Pillow frame rendering, sequential FFmpeg encoding, CLI, and a demo project are implemented.
+
+**Stage 2 — animation engine: implemented, awaiting device verification.** Timeline interpolation, easing, and animated position, scale, rotation, and opacity for text and rectangle layers are included.
 
 Later stages will add timeline animations, transitions, audio, asset providers, and Gemini/Groq project generation. These features are not implemented yet.
 
@@ -28,7 +30,7 @@ python -m pip install -r requirements.txt
 ```bash
 python main.py info
 python main.py validate projects/templates/stage1_demo.json
-python main.py render projects/templates/stage1_demo.json --output output/stage1_demo.mp4
+python main.py render projects/templates/stage1_demo.json --output output/stage2_demo.mp4
 ```
 
 The renderer processes one frame at a time and streams RGB bytes to FFmpeg. It does not retain the full video in memory.
@@ -37,7 +39,7 @@ The renderer processes one frame at a time and streams RGB bytes to FFmpeg. It d
 
 See docs/PROJECT_FORMAT.md and the sample project at projects/templates/stage1_demo.json.
 
-Supported elements in Stage 1:
+Supported elements:
 - text: text, position, font size, color, optional font path
 - rect: filled rectangle, position, dimensions, color
 
