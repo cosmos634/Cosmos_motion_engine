@@ -86,7 +86,7 @@ def validate_project(data, project_dir=None):
             if not isinstance(element, dict):
                 raise ProjectValidationError(f"{ewhere} must be an object")
             etype = element.get("type")
-            if etype not in ELEMENT_KEYS:
+            if not isinstance(etype, str) or etype not in ELEMENT_KEYS:
                 raise ProjectValidationError(f"{ewhere}.type must be text or rect")
             required = ELEMENT_KEYS[etype] - {"font", "animations"}
             _keys(element, ELEMENT_KEYS[etype], required, ewhere)
@@ -118,7 +118,7 @@ def validate_project(data, project_dir=None):
                 awhere = f"{ewhere}.animations[{k}]"
                 _keys(animation, ANIMATION_KEYS, ANIMATION_KEYS, awhere)
                 prop = animation["property"]
-                if prop not in ANIMATABLE:
+                if not isinstance(prop, str) or prop not in ANIMATABLE:
                     raise ProjectValidationError(f"{awhere}.property must be one of {', '.join(sorted(ANIMATABLE))}")
                 if prop in animated_properties:
                     raise ProjectValidationError(f"{awhere}: duplicate animation property {prop}")
@@ -129,7 +129,7 @@ def validate_project(data, project_dir=None):
                 _number(animation["duration"], f"{awhere}.duration", 0.001)
                 if animation["start"] + animation["duration"] > scene["duration"] + 1e-6:
                     raise ProjectValidationError(f"{awhere} extends beyond its scene")
-                if animation["easing"] not in EASINGS:
+                if not isinstance(animation["easing"], str) or animation["easing"] not in EASINGS:
                     raise ProjectValidationError(f"{awhere}.easing must be one of {', '.join(sorted(EASINGS))}")
                 if prop == "scale" and (animation["from"] <= 0 or animation["to"] <= 0):
                     raise ProjectValidationError(f"{awhere}: scale values must be positive")
