@@ -1,5 +1,6 @@
 """Sequential Pillow frame renderer with per-element and scene transitions."""
-from PIL import Image, ImageChops, ImageDraw, ImageFont
+from functools import lru_cache
+from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageOps
 from .animation import animated_value
 
 
@@ -18,7 +19,32 @@ def parse_color(value):
     return tuple(int(raw[i:i + 2], 16) for i in (0, 2, 4, 6))
 
 
+@lru_cache(maxsize=8)
+def _load_image(path):
+    with Image.open(path) as source:
+        source.seek(0)
+        source.thumbnail((1920, 1920), Image.Resampling.LANCZOS)
+        return source.convert("RGBA").copy()
+
+
+def _image_layer(element):
+    image = _load_image(element["source"]).copy()
+    if "width" not in element:
+        return image
+    size = (int(element["width"]), int(element["height"]))
+    fit = element.get("fit", "contain")
+    if fit == "cover":
+        return ImageOps.fit(image, size, method=Image.Resampling.LANCZOS)
+    if fit == "stretch":
+        return image.resize(size, Image.Resampling.LANCZOS)
+    result = Image.new("RGBA", size, (0, 0, 0, 0))
+    contained = ImageOps.contain(image, size, method=Image.Resampling.LANCZOS)
+    result.alpha_composite(contained, ((size[0] - contained.width) // 2, (size[1] - contained.height) // 2))
+    return result
+
 def _element_layer(element, font_path=None):
+    if element["type"] == "image":
+        return _image_layer(element)
     color = parse_color(element["color"])
     if element["type"] == "rect":
         return Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
