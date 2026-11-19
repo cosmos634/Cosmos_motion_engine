@@ -71,8 +71,10 @@ See docs/PROJECT_FORMAT.md and the sample projects in projects/templates/.
 Supported elements:
 - text: text, position, font size, color, optional font path
 - rect: filled rectangle, position, dimensions, color
+- image: project-relative image source, fit mode, transforms, animations
+- video: project-relative video source, clip timing, fit mode, transforms, animations
 
-Audio is optional. Add audio tracks to the project JSON; see docs/PROJECT_FORMAT.md. Audio source files must be inside the project folder.
+Audio is optional. Add audio tracks to the project JSON; see docs/PROJECT_FORMAT.md. Audio source files must be inside the project folder. Video decoding uses persistent FFmpeg readers and keeps only the current frame in memory.
 
 Scene transitions are configured with the optional scene-level `transition_in` object. See docs/PROJECT_FORMAT.md for supported types and directions.
 
