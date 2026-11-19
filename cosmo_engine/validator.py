@@ -9,6 +9,7 @@ ELEMENT_KEYS = {
     "text": {"type", "text", "x", "y", "font_size", "color", "font", "animations"},
     "rect": {"type", "x", "y", "width", "height", "color", "animations"},
     "image": {"type", "source", "x", "y", "width", "height", "fit", "animations"},
+    "video": {"type", "id", "source", "x", "y", "width", "height", "fit", "start", "duration", "source_start", "animations"},
 }
 ANIMATION_KEYS = {"property", "from", "to", "start", "duration", "easing"}
 ANIMATABLE = {"x", "y", "scale", "rotation", "opacity"}
@@ -104,16 +105,18 @@ def validate_project(data, project_dir=None):
                 raise ProjectValidationError(f"{ewhere} must be an object")
             etype = element.get("type")
             if not isinstance(etype, str) or etype not in ELEMENT_KEYS:
-                raise ProjectValidationError(f"{ewhere}.type must be text, rect, or image")
+                raise ProjectValidationError(f"{ewhere}.type must be text, rect, image, or video")
             required = ELEMENT_KEYS[etype] - {"font", "animations", "width", "height", "fit"}
-            if etype == "image":
+            if etype in {"image", "video"}:
                 required = {"type", "source", "x", "y"}
+                if etype == "video":
+                    required |= {"id", "width", "height"}
                 if ("width" in element) != ("height" in element):
                     raise ProjectValidationError(f"{ewhere} width and height must be supplied together")
             _keys(element, ELEMENT_KEYS[etype], required, ewhere)
             for key in ("x", "y"):
                 _number(element[key], f"{ewhere}.{key}")
-            if etype == "image":
+            if etype in {"image", "video"}:
                 source = element["source"]
                 if not isinstance(source, str) or not source:
                     raise ProjectValidationError(f"{ewhere}.source must be a non-empty path")
@@ -129,7 +132,7 @@ def validate_project(data, project_dir=None):
                         _number(element[key], f"{ewhere}.{key}", 1, 1920)
                 if element.get("fit", "contain") not in {"contain", "cover", "stretch"}:
                     raise ProjectValidationError(f"{ewhere}.fit must be contain, cover, or stretch")
-            elif etype != "image":
+            elif etype not in {"image", "video"}:
                 _color(element["color"], f"{ewhere}.color")
             if etype == "text":
                 if not isinstance(element["text"], str):
