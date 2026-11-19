@@ -33,7 +33,7 @@ class VisualDirectorTests(unittest.TestCase):
         self.assertEqual({a["property"] for a in image["animations"]}, {"scale", "x"})
         title = next(e for e in project["scenes"][0]["elements"] if e.get("text") == "Тайны космоса")
         self.assertEqual({a["property"] for a in title["animations"]}, {"opacity", "y", "scale"})
-        self.assertTrue(any(e.get("id") == "cosmo_accent_scene_1" for e in project["scenes"][0]["elements"]))
+        self.assertTrue(any(e.get("type") == "rect" and e.get("color") == "#55E6D0" for e in project["scenes"][0]["elements"]))
 
     def test_is_idempotent(self):
         project = sample_project()
