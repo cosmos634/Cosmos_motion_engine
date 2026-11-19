@@ -1,5 +1,5 @@
-"""Sequential Pillow frame renderer with per-element animation."""
-from PIL import Image, ImageDraw, ImageFont
+"""Sequential Pillow frame renderer with per-element and scene transitions."""
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 from .animation import animated_value
 
 
@@ -21,8 +21,7 @@ def parse_color(value):
 def _element_layer(element, font_path=None):
     color = parse_color(element["color"])
     if element["type"] == "rect":
-        layer = Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
-        return layer
+        return Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
     try:
         font = ImageFont.truetype(font_path, int(element["font_size"])) if font_path else ImageFont.load_default(size=int(element["font_size"]))
     except (OSError, TypeError):
@@ -35,15 +34,72 @@ def _element_layer(element, font_path=None):
     return layer
 
 
+def apply_transition(layer, transition, progress):
+    """Apply an incoming scene transition to a full-frame RGBA layer."""
+    if not transition:
+        return layer
+    width, height = layer.size
+    progress = max(0.0, min(1.0, float(progress)))
+    kind = transition["type"]
+    direction = transition.get("direction", "left")
+
+    if kind == "fade":
+        result = layer.copy()
+        alpha = result.getchannel("A").point(lambda value: round(value * progress))
+        result.putalpha(alpha)
+        return result
+
+    if kind == "slide":
+        offsets = {
+            "left": (-round(width * (1 - progress)), 0),
+            "right": (round(width * (1 - progress)), 0),
+            "up": (0, -round(height * (1 - progress))),
+            "down": (0, round(height * (1 - progress))),
+        }
+        result = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+        result.alpha_composite(layer, offsets[direction])
+        return result
+
+    if kind == "wipe":
+        mask = Image.new("L", layer.size, 0)
+        draw = ImageDraw.Draw(mask)
+        if direction == "left":
+            draw.rectangle((0, 0, round(width * progress), height), fill=255)
+        elif direction == "right":
+            edge = round(width * (1 - progress))
+            draw.rectangle((edge, 0, width, height), fill=255)
+        elif direction == "up":
+            edge = round(height * (1 - progress))
+            draw.rectangle((0, 0, width, edge), fill=255)
+        else:  # down
+            draw.rectangle((0, round(height * (1 - progress)), width, height), fill=255)
+        result = layer.copy()
+        result.putalpha(ImageChops.multiply(result.getchannel("A"), mask))
+        return result
+
+    if kind == "zoom":
+        scale = 0.85 + 0.15 * progress
+        size = (max(1, round(width * scale)), max(1, round(height * scale)))
+        resized = layer.resize(size, Image.Resampling.BICUBIC)
+        result = Image.new("RGBA", layer.size, (0, 0, 0, 0))
+        result.alpha_composite(resized, ((width - size[0]) // 2, (height - size[1]) // 2))
+        return result
+
+    return layer
+
+
 def render_frame(project, frame_index):
     settings = project["project"]
+    width, height = settings["width"], settings["height"]
     timestamp = frame_index / settings["fps"]
-    frame = Image.new("RGBA", (settings["width"], settings["height"]), parse_color(settings["background"]))
+    frame = Image.new("RGBA", (width, height), parse_color(settings["background"]))
 
     for scene in project["scenes"]:
         if not (scene["start"] <= timestamp < scene["start"] + scene["duration"]):
             continue
+
         scene_time = timestamp - scene["start"]
+        scene_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
         for element in scene["elements"]:
             animations = element.get("animations", [])
             x = animated_value(element["x"], animations, "x", scene_time)
@@ -62,7 +118,14 @@ def render_frame(project, frame_index):
                 x -= (layer.width - before[0]) / 2
                 y -= (layer.height - before[1]) / 2
             if opacity < 1:
-                alpha = layer.getchannel("A").point(lambda a: round(a * opacity))
+                alpha = layer.getchannel("A").point(lambda value: round(value * opacity))
                 layer.putalpha(alpha)
-            frame.alpha_composite(layer, (round(x), round(y)))
+            scene_layer.alpha_composite(layer, (round(x), round(y)))
+
+        transition = scene.get("transition_in")
+        if transition:
+            progress = min(1.0, scene_time / transition["duration"])
+            scene_layer = apply_transition(scene_layer, transition, progress)
+        frame.alpha_composite(scene_layer)
+
     return frame.convert("RGB")
