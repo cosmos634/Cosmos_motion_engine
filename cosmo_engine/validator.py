@@ -99,6 +99,7 @@ def validate_project(data, project_dir=None):
                 raise ProjectValidationError(f"{where}.transition_in.direction must be left, right, up, or down")
         if not isinstance(scene["elements"], list):
             raise ProjectValidationError(f"{where}.elements must be an array")
+        video_ids = set()
         for j, element in enumerate(scene["elements"]):
             ewhere = f"{where}.elements[{j}]"
             if not isinstance(element, dict):
@@ -135,9 +136,14 @@ def validate_project(data, project_dir=None):
                 if etype == "video":
                     if not isinstance(element["id"], str) or not element["id"]:
                         raise ProjectValidationError(f"{ewhere}.id must be a non-empty string")
+                    if element["id"] in video_ids:
+                        raise ProjectValidationError(f"{ewhere}.id must be unique within its scene")
+                    video_ids.add(element["id"])
                     _number(element.get("start", 0), f"{ewhere}.start", 0)
                     if "duration" in element:
                         _number(element["duration"], f"{ewhere}.duration", 0.001)
+                        if element.get("start", 0) + element["duration"] > scene["duration"] + 1e-6:
+                            raise ProjectValidationError(f"{ewhere} extends beyond its scene")
                     _number(element.get("source_start", 0), f"{ewhere}.source_start", 0)
             elif etype not in {"image", "video"}:
                 _color(element["color"], f"{ewhere}.color")
