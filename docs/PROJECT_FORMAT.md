@@ -31,7 +31,8 @@ Project files are UTF-8 JSON. Unsupported keys are rejected to catch mistakes ea
 - Width/height are positive integers up to 1920; FPS is a positive integer.
 - Duration is in seconds. Scenes must fit inside the project duration.
 - Scene `start` and animation `start` are relative to the project and scene respectively.
-- Text and rect elements are supported. Image/video layers are planned for later stages.
+- Text, rect, image, and video elements are supported.
+- Text fonts, image sources, video sources, and audio sources are relative to the JSON file directory and cannot escape it.
 - Text font paths are relative to the JSON file's directory and cannot escape it.
 
 ## Animation tracks
@@ -120,3 +121,37 @@ Image elements use a project-relative `source` path and require `x` and `y`.
 - Without explicit dimensions, the image keeps its aspect ratio and is limited to 1920×1920.
 - Image layers support x, y, scale, rotation, and opacity animation tracks.
 - Image sources must exist inside the project directory. A bounded cache avoids decoding the same image for every frame.
+
+
+## Video layers (Stage 5.3)
+
+Video elements are decoded by a persistent FFmpeg process and composited one frame at a time. Frames are not loaded into memory as a full clip.
+
+```json
+{
+  "type": "video",
+  "id": "background_clip",
+  "source": "assets/background.mp4",
+  "x": 0, "y": 0,
+  "width": 640, "height": 360,
+  "fit": "cover",
+  "start": 0,
+  "duration": 3.5,
+  "source_start": 1.2,
+  "animations": [
+    {"property": "opacity", "from": 0, "to": 1, "start": 0, "duration": 0.5, "easing": "linear"},
+    {"property": "scale", "from": 1, "to": 1.08, "start": 0, "duration": 3.5, "easing": "ease_in_out"}
+  ]
+}
+```
+
+- `id` must be unique within its scene.
+- `source` is relative to the project JSON and must stay inside its folder.
+- `width` and `height` are required and range from 1 to 1920.
+- `fit` supports `contain`, `cover`, and `stretch`.
+- `start` is the clip's start time inside its scene (default 0).
+- `duration` is optional; when set, it cannot exceed the scene's remaining duration.
+- `source_start` seeks into the source file in seconds (default 0).
+- Video supports x, y, scale, rotation, and opacity animations.
+- Each video uses one FFmpeg decoder process, reads sequentially, and keeps only the current frame. Decoder processes are closed after rendering.
+- Audio remains on the existing top-level audio timeline and is muxed after video encoding.
