@@ -31,6 +31,86 @@ def _add_animation(element, prop, start_value, end_value, duration, easing="ease
     })
 
 
+STYLE_LABELS = {
+    "cinematic_documentary": "ДОКУМЕНТАЛЬНЫЙ ФИЛЬМ",
+    "modern_motion_graphics": "ТЕХНОЛОГИИ И ДИЗАЙН",
+    "social_media": "КОРОТКО И ЯСНО",
+    "historical_documentary": "ИСТОРИЧЕСКИЙ ОЧЕРК",
+    "scientific_visualization": "НАУЧНЫЙ ОБЗОР",
+}
+
+
+def _fade(element, duration, target=1):
+    element["animations"] = [{
+        "property": "opacity", "from": 0, "to": target,
+        "start": 0, "duration": duration, "easing": "ease_out",
+    }]
+
+
+def _add_scene_composition(elements, texts, width, height, accent, label, scene_number, scene_count, entrance):
+    """Build a restrained editorial title card using existing rect/text layers."""
+    title = texts[0]
+    title_y = int(title.get("y", round(height * 0.56)))
+    margin = max(8, round(width * 0.055))
+    title_x = int(title.get("x", margin + 12))
+    panel_x = max(0, min(title_x - max(12, round(width * 0.025)), width - margin))
+    panel_width = max(1, width - margin - panel_x)
+
+    text_bottom = title_y + int(title.get("font_size", 24) * 1.35)
+    for item in texts[1:3]:
+        item_y = int(item.get("y", text_bottom))
+        text_bottom = max(text_bottom, item_y + int(item.get("font_size", 20) * 1.4))
+
+    panel_top = max(0, title_y - max(24, round(height * 0.075)))
+    panel_bottom = min(height, max(text_bottom + max(12, round(height * 0.025)), panel_top + max(72, round(height * 0.16))))
+    panel_height = max(1, panel_bottom - panel_top)
+
+    panel = {
+        "type": "rect", "x": panel_x, "y": panel_top,
+        "width": panel_width, "height": panel_height,
+        "color": "#071321E8",
+    }
+    _fade(panel, entrance, 0.92)
+
+    bar_width = max(3, round(width * 0.008))
+    accent_bar = {
+        "type": "rect", "x": panel_x, "y": panel_top,
+        "width": bar_width, "height": panel_height, "color": accent,
+    }
+    _fade(accent_bar, entrance)
+
+    additions = [panel, accent_bar]
+    if height >= 480:
+        small_size = max(12, min(28, round(height * 0.014)))
+        top_pad = max(12, round(height * 0.018))
+        kicker = {
+            "type": "text", "text": label,
+            "x": panel_x + max(14, round(width * 0.025)),
+            "y": panel_top + top_pad,
+            "font_size": small_size, "color": accent,
+        }
+        _fade(kicker, entrance)
+        additions.append(kicker)
+
+        counter_text = f"{scene_number:02d} / {scene_count:02d}"
+        counter_width = max(64, round(width * 0.12))
+        counter = {
+            "type": "text", "text": counter_text,
+            "x": max(panel_x + bar_width + 8, panel_x + panel_width - counter_width),
+            "y": panel_top + top_pad,
+            "font_size": small_size, "color": "#FFFFFF",
+        }
+        _fade(counter, entrance)
+        additions.append(counter)
+
+    insert_at = elements.index(title)
+    if insert_at and elements[insert_at - 1].get("type") == "rect":
+        previous = elements[insert_at - 1]
+        if previous.get("color") == accent and previous.get("height", 0) <= max(4, round(height * 0.006)):
+            insert_at -= 1
+    elements[insert_at:insert_at] = additions
+
+
 def apply_visual_direction(project, prompt=""):
     """Add style-specific camera drift, title entrances and accent graphics."""
     style = project.get("visual_style")
@@ -76,6 +156,10 @@ def apply_visual_direction(project, prompt=""):
             _add_animation(item, "y", item_y + round(height * 0.012), item_y, delay)
 
         accent = profile["accent"]
+        _add_scene_composition(
+            elements, texts, width, height, accent,
+            STYLE_LABELS[style], scene_index + 1, len(project.get("scenes", [])), entrance,
+        )
         rule_width = max(44, round(width * 0.075))
         rule_height = max(3, round(height * 0.004))
         already_added = any(
