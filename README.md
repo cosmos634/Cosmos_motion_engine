@@ -6,9 +6,11 @@ A lightweight, JSON-driven video renderer designed for Python 3 and Android/Term
 
 **Stage 1 — core rendering: complete.** Strict JSON validation, Pillow frame rendering, sequential FFmpeg encoding, CLI, and a demo project are implemented.
 
-**Stage 2 — animation engine: implemented, awaiting device verification.** Timeline interpolation, easing, and animated position, scale, rotation, and opacity for text and rectangle layers are included.
+**Stage 2 — animation engine: implemented.** Timeline interpolation, easing, and animated position, scale, rotation, and opacity for text and rectangle layers are included.
 
-Later stages will add timeline animations, transitions, audio, asset providers, and Gemini/Groq project generation. These features are not implemented yet.
+**Stage 3 — audio engine: implemented, awaiting device verification.** Narration, music, and sound-effect tracks can be mixed with volume, start offsets, fades, and optional looping.
+
+Later stages will add transitions, image/video asset providers, Russian text-to-speech integrations, and Gemini/Groq project generation.
 
 ## Requirements
 
@@ -30,7 +32,7 @@ python -m pip install -r requirements.txt
 ```bash
 python main.py info
 python main.py validate projects/templates/stage1_demo.json
-python main.py render projects/templates/stage1_demo.json --output output/stage2_demo.mp4
+python main.py render projects/templates/stage1_demo.json --output output/stage3_demo.mp4
 ```
 
 The renderer processes one frame at a time and streams RGB bytes to FFmpeg. It does not retain the full video in memory.
@@ -43,7 +45,7 @@ Supported elements:
 - text: text, position, font size, color, optional font path
 - rect: filled rectangle, position, dimensions, color
 
-Unsupported keys and element types are rejected during validation. Stage 1 intentionally does not yet implement animation, images, transitions, or audio.
+Audio is optional. Add audio tracks to the project JSON; see docs/PROJECT_FORMAT.md. Audio source files must be inside the project folder.
 
 ## Tests
 
