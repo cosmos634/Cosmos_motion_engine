@@ -15,8 +15,19 @@ Optional model overrides:
 
 ```bash
 export GEMINI_MODEL="gemini-2.5-flash"
-export GROQ_MODEL="llama-3.3-70b-versatile"
+export GROQ_MODEL="openai/gpt-oss-120b"
 ```
+
+## Automatic stock visuals and design
+
+AI generation now uses a stronger visual-design brief (hierarchy, spacing, contrast, restrained palette). To add a real full-frame background automatically, configure at least one Stage 5 image provider:
+
+```bash
+export PEXELS_API_KEY="your_pexels_key"
+# or PIXABAY_API_KEY / UNSPLASH_ACCESS_KEY
+```
+
+The generator searches a relevant stock image, downloads it through the Stage 5 Asset Manager, stores it beside the generated JSON under `assets/`, and adds it behind each scene with a dark readability overlay. If no provider key is configured or search fails, generation still succeeds without a background. Use `--no-visuals` to skip stock-image search.
 
 ## Generate a project
 
@@ -29,7 +40,7 @@ python main.py generate \
 
 The default provider mode tries Gemini first. If it is unavailable or returns invalid project JSON, the generator tries Groq. To select one provider explicitly, use `--provider gemini` or `--provider groq`.
 
-Generated projects are validated before they are written. The model is instructed to generate only text and rectangle layers; external image/video/audio assets are deliberately not fabricated. Add real media using the Stage 5 Asset Manager and existing project format.
+Generated projects are validated before they are written. The model generates text and shape layers; optional stock backgrounds are added by the Stage 5 Asset Manager rather than by fabricated AI file paths.
 
 ## Reliability and safety
 
