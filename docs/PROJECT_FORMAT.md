@@ -95,3 +95,28 @@ python main.py render projects/templates/stage1_demo.json --output output/stage3
 ```
 
 Frames are rendered sequentially and streamed to FFmpeg.
+
+
+## Image layers (Stage 5.2)
+
+Image elements use a project-relative `source` path and require `x` and `y`.
+
+```json
+{
+  "type": "image",
+  "source": "assets/cover.jpg",
+  "x": 40, "y": 30,
+  "width": 560, "height": 300,
+  "fit": "cover",
+  "animations": [
+    {"property": "scale", "from": 0.9, "to": 1, "start": 0, "duration": 0.8, "easing": "ease_out"},
+    {"property": "opacity", "from": 0, "to": 1, "start": 0, "duration": 0.5, "easing": "linear"}
+  ]
+}
+```
+
+- Width and height are optional but must be supplied together (1–1920).
+- `fit` is `contain` (default), `cover`, or `stretch`.
+- Without explicit dimensions, the image keeps its aspect ratio and is limited to 1920×1920.
+- Image layers support x, y, scale, rotation, and opacity animation tracks.
+- Image sources must exist inside the project directory. A bounded cache avoids decoding the same image for every frame.
