@@ -64,8 +64,8 @@ The JSON must follow this schema:
 }
 
 Strict rules:
-- Use only supported project keys and element types: text and rect.
-- Do not create image, video, font, or audio paths. Assets are added separately.
+- Use only supported project keys and element types: text and rect. A real photo background is added automatically by the Asset Manager after generation.
+- Do not create image, video, font, or audio paths.
 - Every scene must have id, start, duration, and elements.
 - Every text element must have text, x, y, font_size, and color.
 - Every rect must have x, y, width, height, and color.
@@ -75,7 +75,12 @@ Strict rules:
 - A scene may use transition_in with fade, slide, wipe, or zoom and a duration.
 - Scene times must fit entirely inside the requested total duration.
 - Keep all positions and dimensions inside the requested canvas.
-- Use concise Russian on-screen text unless the user requests another language.
+- Follow professional motion-design principles: strong visual hierarchy, generous negative space, consistent alignment, readable contrast, and a restrained 2–3 color palette.
+- Use a bold short headline, one supporting line at most, and avoid filling the whole frame with text.
+- Use purposeful geometric accents, subtle panels, and layered depth; avoid random rectangles and clutter.
+- Place important text within the central 80% safe area and never let text touch the edges.
+- Use a dark cinematic palette with one bright accent unless the brief requests another mood.
+- Use concise on-screen text in the same language requested by the user.
 - Make a coherent sequence with a clear hook, progression, and ending.
 - Do not invent external media filenames or pretend that assets already exist.
 """
