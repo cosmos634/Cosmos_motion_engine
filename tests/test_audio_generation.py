@@ -23,7 +23,7 @@ def project():
 
 
 class AudioGenerationTests(unittest.TestCase):
-    def test_creates_music_and_scene_effects_without_network(self):
+    def test_creates_music_and_scene_effects_when_tts_fails(self):
         data = project()
         with tempfile.TemporaryDirectory() as directory:
             with patch(
@@ -32,25 +32,43 @@ class AudioGenerationTests(unittest.TestCase):
             ):
                 tracks, warnings = create_audio_tracks(data, directory)
             self.assertEqual([item["kind"] for item in tracks], ["music", "sfx"])
-            self.assertEqual(warnings, ["Russian TTS unavailable: offline"])
+            self.assertEqual(warnings, ["Russian TTS unavailable: RuntimeError: offline"])
+            self.assertEqual(tracks[0]["volume"], 0.75)
+            self.assertEqual(tracks[1]["volume"], 0.65)
             for track in tracks:
                 self.assertTrue((Path(directory) / track["source"]).is_file())
             data["audio"] = tracks
             validate_project(data, directory)
 
-    def test_adds_russian_narration_when_tts_succeeds(self):
+    def test_adds_russian_narration_after_mp3_validation(self):
         async def fake_tts(text, destination):
-            Path(destination).write_bytes(b"fake-mp3")
+            Path(destination).write_bytes(b"test-audio-payload")
 
         data = project()
         with tempfile.TemporaryDirectory() as directory:
-            with patch("cosmo_engine.audio_generation._synthesize_edge_tts", fake_tts):
-                tracks, warnings = create_audio_tracks(data, directory)
+            with patch("cosmo_engine.audio_generation._validate_mp3") as validate:
+                with patch("cosmo_engine.audio_generation._synthesize_edge_tts", fake_tts):
+                    tracks, warnings = create_audio_tracks(data, directory)
             self.assertEqual(warnings, [])
             self.assertEqual([item["kind"] for item in tracks], ["music", "sfx", "narration"])
-            self.assertTrue((Path(directory) / tracks[-1]["source"]).is_file())
+            self.assertTrue(validate.called)
+            narration_path = Path(directory) / tracks[-1]["source"]
+            self.assertTrue(narration_path.is_file())
+            self.assertFalse((Path(directory) / "assets/audio/narration_ru.tmp.mp3").exists())
             data["audio"] = tracks
             validate_project(data, directory)
+
+    def test_rejects_empty_tts_output_without_adding_narration(self):
+        async def empty_tts(text, destination):
+            Path(destination).write_bytes(b"")
+
+        data = project()
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("cosmo_engine.audio_generation._synthesize_edge_tts", empty_tts):
+                tracks, warnings = create_audio_tracks(data, directory)
+            self.assertEqual([item["kind"] for item in tracks], ["music", "sfx"])
+            self.assertTrue(any("empty or suspiciously small" in item for item in warnings))
+            self.assertFalse((Path(directory) / "assets/audio/narration_ru.mp3").exists())
 
 
 if __name__ == "__main__":
