@@ -12,9 +12,9 @@ A lightweight, JSON-driven video renderer designed for Python 3 and Android/Term
 
 **Stage 4 — transition engine: implemented, awaiting device verification.** Fade, slide, wipe, and zoom transitions are available between overlapping scenes.
 
-**Stage 5 — Asset Manager: initial implementation added.** Provider adapters for Pexels, Pixabay, and Unsplash; HTTPS media downloads; size/type checks; and local metadata caching are available on the `stage-5/asset-manager` branch. Image/video rendering integration is a later Stage 5 task.
+**Stage 5 — Asset Manager: implemented and render-tested on Termux.** Provider adapters for Pexels, Pixabay, and Unsplash; HTTPS media downloads; size/type checks; local metadata caching; image layers; and sequential video layers are included.
 
-Later stages will add Russian text-to-speech integrations and Gemini/Groq project generation.
+**Stage 6 — AI Project Generator: initial implementation added.** Gemini is the primary provider and Groq is the automatic fallback. Text prompts become validated project JSON; generated code is never executed. See [docs/STAGE6_AI.md](docs/STAGE6_AI.md).
 
 ## Requirements
 
