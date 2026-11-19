@@ -1,4 +1,4 @@
-"""Strict validator for the Stage 2 JSON project format."""
+"""Strict validator for the Stage 3 JSON project format."""
 from pathlib import Path
 import math
 
@@ -144,7 +144,7 @@ def validate_project(data, project_dir=None):
         where = f"audio[{i}]"
         required = {"kind", "source", "start", "duration", "volume", "loop"}
         _keys(track, AUDIO_KEYS, required, where)
-        if track["kind"] not in AUDIO_KINDS:
+        if not isinstance(track["kind"], str) or track["kind"] not in AUDIO_KINDS:
             raise ProjectValidationError(f"{where}.kind must be narration, music, or sfx")
         if not isinstance(track["source"], str) or not track["source"]:
             raise ProjectValidationError(f"{where}.source must be a non-empty path")
