@@ -30,7 +30,7 @@ class VisualDirectorTests(unittest.TestCase):
         style = apply_visual_direction(project, "A documentary about space")
         self.assertEqual(style, "scientific_visualization")
         image = project["scenes"][0]["elements"][0]
-        self.assertEqual({a["property"] for a in image["animations"]}, {"scale", "x"})
+        self.assertEqual({a["property"] for a in image["animations"]}, {"scale", "x", "y"})
         title = next(e for e in project["scenes"][0]["elements"] if e.get("text") == "Тайны космоса")
         self.assertEqual({a["property"] for a in title["animations"]}, {"opacity", "y", "scale"})
         self.assertTrue(any(e.get("type") == "rect" and e.get("color") == "#55E6D0" for e in project["scenes"][0]["elements"]))
