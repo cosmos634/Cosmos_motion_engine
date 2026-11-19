@@ -25,5 +25,8 @@ def encode_frames(project, frame_count, output_path, frame_renderer):
         process.kill()
         process.wait()
         raise
+    finally:
+        from .renderer import close_video_readers
+        close_video_readers()
     if return_code != 0:
         raise RuntimeError(f"FFmpeg exited with status {return_code}")
