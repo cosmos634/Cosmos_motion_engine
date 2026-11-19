@@ -1,5 +1,6 @@
 """Sequential Pillow frame renderer with per-element and scene transitions."""
 from functools import lru_cache
+import subprocess
 from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageOps
 from .animation import animated_value
 
@@ -42,9 +43,92 @@ def _image_layer(element):
     result.alpha_composite(contained, ((size[0] - contained.width) // 2, (size[1] - contained.height) // 2))
     return result
 
-def _element_layer(element, font_path=None):
+
+_VIDEO_READERS = {}
+
+
+class _VideoReader:
+    """One persistent FFmpeg decoder per video layer; keeps only a single raw frame."""
+    def __init__(self, element, fps):
+        self.width = int(element["width"])
+        self.height = int(element["height"])
+        fit = element.get("fit", "contain")
+        if fit == "cover":
+            vf = f"scale={self.width}:{self.height}:force_original_aspect_ratio=increase,crop={self.width}:{self.height},fps={fps}"
+        elif fit == "stretch":
+            vf = f"scale={self.width}:{self.height},fps={fps}"
+        else:
+            vf = f"scale={self.width}:{self.height}:force_original_aspect_ratio=decrease,pad={self.width}:{self.height}:(ow-iw)/2:(oh-ih)/2,fps={fps}"
+        command = ["ffmpeg", "-v", "error"]
+        if element.get("source_start", 0):
+            command += ["-ss", str(element["source_start"])]
+        command += ["-i", element["source"], "-an", "-vf", vf, "-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1"]
+        self.process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self.frame_bytes = self.width * self.height * 4
+        self.index = -1
+        self.ended = False
+
+    def _read_frame(self):
+        chunks = []
+        remaining = self.frame_bytes
+        while remaining:
+            chunk = self.process.stdout.read(remaining)
+            if not chunk:
+                self.ended = True
+                return None
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        return b"".join(chunks)
+
+    def frame_at(self, index):
+        if self.ended or index < self.index:
+            return None
+        raw = None
+        while self.index < index:
+            raw = self._read_frame()
+            if raw is None:
+                return None
+            self.index += 1
+        return Image.frombytes("RGBA", (self.width, self.height), raw)
+
+    def close(self):
+        if self.process.poll() is None:
+            self.process.terminate()
+        try:
+            self.process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            self.process.kill()
+            self.process.wait()
+        if self.process.stdout:
+            self.process.stdout.close()
+
+
+def close_video_readers():
+    for reader in _VIDEO_READERS.values():
+        reader.close()
+    _VIDEO_READERS.clear()
+
+
+def _video_layer(element, scene, scene_time, fps):
+    key = (scene["id"], element["id"])
+    reader = _VIDEO_READERS.get(key)
+    if reader is None:
+        reader = _VideoReader(element, fps)
+        _VIDEO_READERS[key] = reader
+    if scene_time < element.get("start", 0):
+        return Image.new("RGBA", (element["width"], element["height"]), (0, 0, 0, 0))
+    local_time = scene_time - element.get("start", 0)
+    if "duration" in element and local_time >= element["duration"]:
+        return Image.new("RGBA", (element["width"], element["height"]), (0, 0, 0, 0))
+    frame = reader.frame_at(round(local_time * fps))
+    return frame if frame is not None else Image.new("RGBA", (element["width"], element["height"]), (0, 0, 0, 0))
+
+
+def _element_layer(element, font_path=None, scene=None, scene_time=0, fps=24):
     if element["type"] == "image":
         return _image_layer(element)
+    if element["type"] == "video":
+        return _video_layer(element, scene, scene_time, fps)
     color = parse_color(element["color"])
     if element["type"] == "rect":
         return Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
@@ -134,7 +218,7 @@ def render_frame(project, frame_index):
             rotation = animated_value(0, animations, "rotation", scene_time)
             opacity = animated_value(1, animations, "opacity", scene_time)
 
-            layer = _element_layer(element, element.get("font"))
+            layer = _element_layer(element, element.get("font"), scene, scene_time, settings["fps"])
             new_size = (max(1, round(layer.width * scale)), max(1, round(layer.height * scale)))
             if new_size != layer.size:
                 layer = layer.resize(new_size, Image.Resampling.BICUBIC)
