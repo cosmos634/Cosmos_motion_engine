@@ -9,6 +9,7 @@ Add keys to the Termux shell environment. Keep keys private and never commit the
 ```bash
 export GEMINI_API_KEY="your_gemini_key"
 export GROQ_API_KEY="your_groq_key"
+export PIXABAY_API_KEY="your_pixabay_key"
 ```
 
 Optional model overrides:
@@ -18,16 +19,11 @@ export GEMINI_MODEL="gemini-2.5-flash"
 export GROQ_MODEL="openai/gpt-oss-120b"
 ```
 
-## Automatic stock visuals and design
+## Automatic Pixabay visuals and design
 
-AI generation now uses a stronger visual-design brief (hierarchy, spacing, contrast, restrained palette). To add a real full-frame background automatically, configure at least one Stage 5 image provider:
+AI generation uses a visual-design brief (hierarchy, spacing, contrast, restrained palette). When `PIXABAY_API_KEY` is configured, the generator searches Pixabay for a relevant image, downloads it through the Stage 5 Asset Manager, stores it beside the generated JSON under `assets/`, and adds it behind each scene with a dark readability overlay.
 
-```bash
-export PEXELS_API_KEY="your_pexels_key"
-# or PIXABAY_API_KEY / UNSPLASH_ACCESS_KEY
-```
-
-The generator searches a relevant stock image, downloads it through the Stage 5 Asset Manager, stores it beside the generated JSON under `assets/`, and adds it behind each scene with a dark readability overlay. If no provider key is configured or search fails, generation still succeeds without a background. Use `--no-visuals` to skip stock-image search.
+If the key is missing or Pixabay search/download fails, generation still succeeds without a background. Use `--no-visuals` to skip stock-image search.
 
 ## Generate a project
 
