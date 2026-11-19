@@ -84,7 +84,7 @@ def main():
             output = Path(args.output).expanduser().resolve()
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(
-                json.dumps(project, ensure_ascii=False, indent=2) + "\\n",
+                json.dumps(project, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
             print(f"Generated and validated with {provider}: {output}")
