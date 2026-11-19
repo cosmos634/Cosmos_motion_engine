@@ -31,7 +31,7 @@ Project files are UTF-8 JSON. Unsupported keys are rejected to catch mistakes ea
 - Width/height are positive integers up to 1920; FPS is a positive integer.
 - Duration is in seconds. Scenes must fit inside the project duration.
 - Scene `start` and animation `start` are relative to the project and scene respectively.
-- Text and rect elements are supported. Image/video layers are planned for later stages. Scene transitions are supported through optional `transition_in` settings.
+- Text and rect elements are supported. Image/video layers are planned for later stages.
 - Text font paths are relative to the JSON file's directory and cannot escape it.
 
 ## Animation tracks
@@ -45,7 +45,25 @@ Each element may contain an optional `animations` array. Each track has:
 
 Scale must remain positive. Opacity ranges from 0 to 1. Only one track per property is allowed on an element in this stage. Track values hold at the from/to values before and after the track, respectively.
 
-## Scene transitions (Stage 4)\n\nA scene may include an optional `transition_in` object. The incoming scene is composited over the previous active scene during the transition window, so arrange the scene start times to overlap by at least the transition duration. Supported types are `fade`, `slide`, `wipe`, and `zoom`. Duration is in seconds; direction is optional and may be `left`, `right`, `up`, or `down` (used by slide and wipe).\n\nExample:\n\n```json\n"transition_in": {"type": "wipe", "duration": 0.6, "direction": "left"}\n```\n\n## Audio tracks (Stage 3)
+## Scene transitions (Stage 4)
+
+A scene may include an optional `transition_in` object. The incoming scene is composited over the previous active scene during the transition window, so arrange the scene start times to overlap by at least the transition duration. Keep scenes in the intended render order.
+
+Supported transition types:
+- `fade`: gradually changes the incoming scene opacity.
+- `slide`: moves the incoming scene into frame.
+- `wipe`: reveals the incoming scene with a directional mask.
+- `zoom`: scales the incoming scene from 85% to its full size.
+
+The `duration` is in seconds. The optional `direction` may be `left`, `right`, `up`, or `down`; it is used by slide and wipe. If omitted, direction defaults to `left`.
+
+Example scene setting:
+
+```json
+"transition_in": {"type": "wipe", "duration": 0.6, "direction": "left"}
+```
+
+## Audio tracks (Stage 3)
 
 Add an optional top-level audio array. Each track supports:
 - kind: narration, music, or sfx
