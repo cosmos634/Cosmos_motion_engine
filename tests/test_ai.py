@@ -71,6 +71,33 @@ class ProjectGeneratorTests(unittest.TestCase):
         _, used = ProjectGenerator(gemini=gemini, groq=groq).generate("demo")
         self.assertEqual(used, "groq")
 
+    def test_animation_timing_is_clamped_to_scene(self):
+        project = valid_project()
+        project["scenes"][0]["duration"] = 5
+        project["scenes"][0]["elements"][0]["animations"] = [{
+            "property": "opacity", "from": 0, "to": 1,
+            "start": 4.5, "duration": 2, "easing": "ease_out",
+        }]
+        provider = FakeProvider(response=json.dumps(project))
+        result, used = ProjectGenerator(groq=provider).generate("demo")
+        animation = result["scenes"][0]["elements"][0]["animations"][0]
+        self.assertEqual(used, "groq")
+        self.assertEqual(animation["start"], 4.5)
+        self.assertEqual(animation["duration"], 0.5)
+
+    def test_animation_start_after_scene_is_shifted_inside(self):
+        project = valid_project()
+        project["scenes"][0]["duration"] = 5
+        project["scenes"][0]["elements"][0]["animations"] = [{
+            "property": "opacity", "from": 0, "to": 1,
+            "start": 8, "duration": 1, "easing": "ease_out",
+        }]
+        provider = FakeProvider(response=json.dumps(project))
+        result, _ = ProjectGenerator(groq=provider).generate("demo")
+        animation = result["scenes"][0]["elements"][0]["animations"][0]
+        self.assertEqual(animation["start"], 4.999)
+        self.assertEqual(animation["duration"], 0.001)
+
     def test_invalid_prompt_is_rejected(self):
         with self.assertRaises(ValueError):
             ProjectGenerator(gemini=FakeProvider()).generate("  ")
