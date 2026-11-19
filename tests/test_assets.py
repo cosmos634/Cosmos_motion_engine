@@ -1,6 +1,6 @@
-import json
 import tempfile
 import unittest
+from email.message import Message
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,7 +11,9 @@ from cosmo_engine.assets import AssetError, AssetManager
 class FakeResponse:
     def __init__(self, body, content_type="image/png", final_url="https://cdn.example.test/file"):
         self.body = body
-        self.headers = {"Content-Type": content_type, "Content-Length": str(len(body))}
+        self.headers = Message()
+        self.headers["Content-Type"] = content_type
+        self.headers["Content-Length"] = str(len(body))
         self.final_url = final_url
         self.offset = 0
 
