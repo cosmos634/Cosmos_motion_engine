@@ -1,10 +1,10 @@
-"""Strict validator for the Stage 3 JSON project format."""
+"""Strict validator for the Stage 4 JSON project format."""
 from pathlib import Path
 import math
 
 TOP_KEYS = {"version", "project", "scenes", "audio"}
 PROJECT_KEYS = {"width", "height", "fps", "duration", "background"}
-SCENE_KEYS = {"id", "start", "duration", "elements"}
+SCENE_KEYS = {"id", "start", "duration", "elements", "transition_in"}
 ELEMENT_KEYS = {
     "text": {"type", "text", "x", "y", "font_size", "color", "font", "animations"},
     "rect": {"type", "x", "y", "width", "height", "color", "animations"},
@@ -81,6 +81,20 @@ def validate_project(data, project_dir=None):
         _number(scene["duration"], f"{where}.duration", 0.001)
         if scene["start"] + scene["duration"] > p["duration"] + 1e-6:
             raise ProjectValidationError(f"{where} extends beyond project duration")
+        transition = scene.get("transition_in")
+        if transition is not None:
+            _keys(transition, {"type", "duration", "direction"}, {"type", "duration"}, f"{where}.transition_in")
+            transition_types = {"fade", "slide", "wipe", "zoom"}
+            if not isinstance(transition["type"], str) or transition["type"] not in transition_types:
+                raise ProjectValidationError(f"{where}.transition_in.type must be fade, slide, wipe, or zoom")
+            _number(transition["duration"], f"{where}.transition_in.duration", 0.001)
+            if transition["duration"] > scene["duration"]:
+                raise ProjectValidationError(f"{where}.transition_in.duration cannot exceed scene duration")
+            directions = {"left", "right", "up", "down"}
+            if "direction" in transition and (
+                not isinstance(transition["direction"], str) or transition["direction"] not in directions
+            ):
+                raise ProjectValidationError(f"{where}.transition_in.direction must be left, right, up, or down")
         if not isinstance(scene["elements"], list):
             raise ProjectValidationError(f"{where}.elements must be an array")
         for j, element in enumerate(scene["elements"]):
