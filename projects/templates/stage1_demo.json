@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "project": {
+    "width": 640,
+    "height": 360,
+    "fps": 24,
+    "duration": 3,
+    "background": "#101426"
+  },
+  "scenes": [
+    {
+      "id": "opening",
+      "start": 0,
+      "duration": 3,
+      "elements": [
+        {
+          "type": "rect",
+          "x": 70,
+          "y": 90,
+          "width": 500,
+          "height": 180,
+          "color": "#202D50"
+        },
+        {
+          "type": "text",
+          "text": "COSMO MOTION ENGINE",
+          "x": 105,
+          "y": 145,
+          "font_size": 28,
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "text": "Stage 1 - Core renderer",
+          "x": 180,
+          "y": 205,
+          "font_size": 18,
+          "color": "#55DDF5"
+        }
+      ]
+    }
+  ]
+}
