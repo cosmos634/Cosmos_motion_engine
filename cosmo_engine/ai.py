@@ -27,6 +27,7 @@ The JSON must follow this schema:
     "duration": 20,
     "background": "#101426"
   },
+  "voiceover": "Полный связный текст дикторской речи на русском языке.",
   "scenes": [
     {
       "id": "scene_1",
@@ -81,7 +82,9 @@ Strict rules:
 - Use purposeful geometric accents, subtle panels, and layered depth; avoid random rectangles and clutter.
 - Place important text within the central 80% safe area and never let text touch the edges.
 - Use a dark cinematic palette with one bright accent unless the brief requests another mood.
-- Use concise on-screen text in the same language requested by the user.
+- IMPORTANT: The complete video language is Russian (ru-RU), regardless of the language used in the user's prompt.
+- Write every on-screen text element in natural Russian.
+- Include a "voiceover" field containing a coherent, natural Russian narration script for the full video. It must be suitable for spoken delivery, not just a list of titles. Do not include stage directions or sound descriptions.
 - Make a coherent sequence with a clear hook, progression, and ending.
 - Do not invent external media filenames or pretend that assets already exist.
 """
@@ -218,6 +221,8 @@ class ProjectGenerator:
             f"Create a video project from this brief:\n{prompt.strip()}\n\n"
             f"Required canvas: {width}x{height}. FPS: {fps}. "
             f"Total duration: exactly {duration} seconds. "
+            "The complete video must be in Russian (ru-RU): all visible text and the voiceover script. "
+            "Include a natural Russian voiceover in the top-level voiceover field. "
             "Return only the project JSON."
         )
         errors = []
