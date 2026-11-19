@@ -5,6 +5,7 @@ executed, and every project is checked by the existing project validator.
 """
 
 import json
+import math
 import os
 
 from .ai_providers import GeminiProvider, GroqProvider
@@ -130,6 +131,55 @@ class ProjectGenerator:
             raise AIGenerationError("AI project must be a JSON object")
         return project
 
+    @staticmethod
+    def _normalize_animation_timing(project):
+        """Keep valid numeric animations inside their scene boundaries."""
+        scenes = project.get("scenes", [])
+        if not isinstance(scenes, list):
+            return
+        for scene in scenes:
+            if not isinstance(scene, dict):
+                continue
+            scene_duration = scene.get("duration")
+            if (
+                isinstance(scene_duration, bool)
+                or not isinstance(scene_duration, (int, float))
+                or not math.isfinite(scene_duration)
+                or scene_duration < 0.001
+            ):
+                continue
+            elements = scene.get("elements", [])
+            if not isinstance(elements, list):
+                continue
+            for element in elements:
+                if not isinstance(element, dict):
+                    continue
+                animations = element.get("animations", [])
+                if not isinstance(animations, list):
+                    continue
+                for animation in animations:
+                    if not isinstance(animation, dict):
+                        continue
+                    start = animation.get("start")
+                    duration = animation.get("duration")
+                    if (
+                        isinstance(start, bool)
+                        or isinstance(duration, bool)
+                        or not isinstance(start, (int, float))
+                        or not isinstance(duration, (int, float))
+                        or not math.isfinite(start)
+                        or not math.isfinite(duration)
+                        or start < 0
+                        or duration <= 0
+                    ):
+                        continue
+                    if start >= scene_duration:
+                        start = max(0, scene_duration - 0.001)
+                    animation["start"] = start
+                    animation["duration"] = max(
+                        0.001, min(duration, scene_duration - start)
+                    )
+
     def generate(self, prompt, provider="auto", width=1080, height=1920, fps=30, duration=20):
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("prompt must not be empty")
@@ -175,6 +225,7 @@ class ProjectGenerator:
             try:
                 raw = client.generate_text(SYSTEM_PROMPT, user_prompt)
                 project = self._parse_project(raw)
+                self._normalize_animation_timing(project)
                 validate_project(project)
                 settings = project["project"]
                 if (settings["width"], settings["height"], settings["fps"]) != (width, height, fps):
