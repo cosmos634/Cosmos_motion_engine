@@ -1,6 +1,7 @@
 import unittest
 
 from cosmo_engine.visual_director import apply_visual_direction, infer_visual_style
+from cosmo_engine.validator import validate_project
 
 
 def sample_project():
@@ -34,6 +35,32 @@ class VisualDirectorTests(unittest.TestCase):
         title = next(e for e in project["scenes"][0]["elements"] if e.get("text") == "Тайны космоса")
         self.assertEqual({a["property"] for a in title["animations"]}, {"opacity", "y", "scale"})
         self.assertTrue(any(e.get("type") == "rect" and e.get("color") == "#55E6D0" for e in project["scenes"][0]["elements"]))
+
+
+    def test_adds_professional_scene_composition(self):
+        project = sample_project()
+        apply_visual_direction(project, "Научный ролик о космосе")
+        elements = project["scenes"][0]["elements"]
+        panel = next(
+            item for item in elements
+            if item.get("type") == "rect" and item.get("color") == "#071321E8"
+        )
+        self.assertGreater(panel["width"], 0)
+        self.assertGreater(panel["height"], 0)
+        self.assertTrue(any(
+            item.get("type") == "text" and item.get("text") == "НАУЧНЫЙ ОБЗОР"
+            for item in elements
+        ))
+        self.assertTrue(any(
+            item.get("type") == "text" and item.get("text") == "01 / 01"
+            for item in elements
+        ))
+        self.assertTrue(any(
+            item.get("type") == "rect" and item.get("color") == "#55E6D0"
+            and item.get("width", 0) <= 10
+            for item in elements
+        ))
+        self.assertTrue(validate_project(project))
 
     def test_is_idempotent(self):
         project = sample_project()
