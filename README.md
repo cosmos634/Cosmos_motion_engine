@@ -8,9 +8,11 @@ A lightweight, JSON-driven video renderer designed for Python 3 and Android/Term
 
 **Stage 2 — animation engine: implemented.** Timeline interpolation, easing, and animated position, scale, rotation, and opacity for text and rectangle layers are included.
 
-**Stage 3 — audio engine: implemented and verified on the target Android device.** Narration, music, and sound-effect tracks can be mixed with volume, start offsets, fades, and optional looping.\n\n**Stage 4 — transition engine: implemented, awaiting device verification.** Fade, slide, wipe, and zoom transitions are available between overlapping scenes. Narration, music, and sound-effect tracks can be mixed with volume, start offsets, fades, and optional looping.
+**Stage 3 — audio engine: implemented and verified on the target Android device.** Narration, music, and sound-effect tracks can be mixed with volume, start offsets, fades, and optional looping.
 
-Later stages will add transitions, image/video asset providers, Russian text-to-speech integrations, and Gemini/Groq project generation.
+**Stage 4 — transition engine: implemented, awaiting device verification.** Fade, slide, wipe, and zoom transitions are available between overlapping scenes.
+
+Later stages will add image/video asset providers, Russian text-to-speech integrations, and Gemini/Groq project generation.
 
 ## Requirements
 
@@ -37,15 +39,17 @@ python main.py render projects/templates/stage1_demo.json --output output/stage3
 
 The renderer processes one frame at a time and streams RGB bytes to FFmpeg. It does not retain the full video in memory.
 
-## Stage 1 project format
+## Project format
 
-See docs/PROJECT_FORMAT.md and the sample project at projects/templates/stage1_demo.json.
+See docs/PROJECT_FORMAT.md and the sample projects in projects/templates/.
 
 Supported elements:
 - text: text, position, font size, color, optional font path
 - rect: filled rectangle, position, dimensions, color
 
 Audio is optional. Add audio tracks to the project JSON; see docs/PROJECT_FORMAT.md. Audio source files must be inside the project folder.
+
+Scene transitions are configured with the optional scene-level `transition_in` object. See docs/PROJECT_FORMAT.md for supported types and directions.
 
 ## Tests
 
