@@ -1,5 +1,6 @@
 """Strict validation for the Stage 1 JSON project format."""
 from pathlib import Path
+import math
 
 TOP_KEYS = {"version", "project", "scenes"}
 PROJECT_KEYS = {"width", "height", "fps", "duration", "background"}
@@ -29,6 +30,8 @@ def _keys(obj, allowed, required, where):
 def _number(value, name, minimum=None):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ProjectValidationError(f"{name} must be a number")
+    if not math.isfinite(value):
+        raise ProjectValidationError(f"{name} must be finite")
     if minimum is not None and value < minimum:
         raise ProjectValidationError(f"{name} must be >= {minimum}")
 
