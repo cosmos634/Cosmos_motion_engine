@@ -13,6 +13,15 @@ from cosmo_engine.renderer import render_frame
 from cosmo_engine.validator import ProjectValidationError, validate_project
 
 
+def _resolve_asset(source, project_dir, label):
+    resolved = (project_dir / source).resolve()
+    if project_dir not in resolved.parents:
+        raise ProjectValidationError(f"{label} path escapes project directory")
+    if not resolved.is_file():
+        raise ProjectValidationError(f"{label} file not found: {source}")
+    return str(resolved)
+
+
 def load_project(path):
     path = Path(path).resolve()
     try:
@@ -21,21 +30,18 @@ def load_project(path):
         raise ProjectValidationError(f"invalid JSON: {exc}") from exc
     validate_project(data, path.parent)
     for track in data.get("audio", []):
-        source = (path.parent / track["source"]).resolve()
-        if path.parent not in source.parents and source != path.parent:
-            raise ProjectValidationError("audio source path escapes project directory")
-        if not source.is_file():
-            raise ProjectValidationError("audio source file not found: " + track["source"])
-        track["source"] = str(source)
+        track["source"] = _resolve_asset(track["source"], path.parent, "audio source")
     for scene in data["scenes"]:
         for element in scene["elements"]:
             if element.get("font"):
-                element["font"] = str((path.parent / element["font"]).resolve())
+                element["font"] = _resolve_asset(element["font"], path.parent, "font")
+            if element.get("type") == "image":
+                element["source"] = _resolve_asset(element["source"], path.parent, "image source")
     return data, path.parent
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cosmo", description="Cosmo Motion Engine — Stage 4")
+    parser = argparse.ArgumentParser(prog="cosmo", description="Cosmo Motion Engine — Stage 5")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("info", help="show engine information")
     validate_cmd = sub.add_parser("validate", help="validate a JSON project")
@@ -47,7 +53,7 @@ def main():
 
     try:
         if args.command == "info":
-            print(f"Cosmo Motion Engine {__version__} | Stage 4")
+            print(f"Cosmo Motion Engine {__version__} | Stage 5")
             print("Python + Pillow + FFmpeg | JSON projects | sequential rendering")
             return 0
         project, project_dir = load_project(args.project) if args.command in ("validate", "render") else (None, None)
