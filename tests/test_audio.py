@@ -18,6 +18,7 @@ class AudioCommandTests(unittest.TestCase):
         self.assertIn("afade=t=in:st=0:d=0.200000", joined)
         self.assertIn("afade=t=out:st=2.600000:d=0.400000", joined)
         self.assertIn("-c:v copy", joined)
+        self.assertIn("[1:a]atrim=duration=3.000000", joined)
         self.assertIn("[aout]", joined)
 
     def test_loop_track_adds_stream_loop(self):
