@@ -46,7 +46,7 @@ def load_project(path):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="cosmo", description="Cosmo Motion Engine — Stage 7"
+        prog="cosmo", description="Cosmo Motion Engine — Stage 8"
     )
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("info", help="show engine information")
@@ -73,7 +73,7 @@ def main():
 
     try:
         if args.command == "info":
-            print(f"Cosmo Motion Engine {__version__} | Stage 7")
+            print(f"Cosmo Motion Engine {__version__} | Stage 8")
             print("Python + Pillow + FFmpeg | Gemini + Groq | Russian TTS + audio mix")
             return 0
 
