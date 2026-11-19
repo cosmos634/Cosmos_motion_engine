@@ -44,6 +44,6 @@ Generated projects are validated before they are written. The model is instructe
 ## Tests
 
 ```bash
-python -m unittest tests.test_ai -v
+python -m unittest discover -s tests -p 'test_ai.py' -v
 python -m unittest discover -s tests -v
 ```
