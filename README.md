@@ -12,7 +12,9 @@ A lightweight, JSON-driven video renderer designed for Python 3 and Android/Term
 
 **Stage 4 — transition engine: implemented, awaiting device verification.** Fade, slide, wipe, and zoom transitions are available between overlapping scenes.
 
-Later stages will add image/video asset providers, Russian text-to-speech integrations, and Gemini/Groq project generation.
+**Stage 5 — Asset Manager: initial implementation added.** Provider adapters for Pexels, Pixabay, and Unsplash; HTTPS media downloads; size/type checks; and local metadata caching are available on the `stage-5/asset-manager` branch. Image/video rendering integration is a later Stage 5 task.
+
+Later stages will add Russian text-to-speech integrations and Gemini/Groq project generation.
 
 ## Requirements
 
@@ -39,6 +41,29 @@ python main.py render projects/templates/stage1_demo.json --output output/stage3
 
 The renderer processes one frame at a time and streams RGB bytes to FFmpeg. It does not retain the full video in memory.
 
+## Asset Manager (Stage 5)
+
+Set only the API key for the provider you want to use:
+
+```bash
+export PEXELS_API_KEY="your_key"
+export PIXABAY_API_KEY="your_key"
+export UNSPLASH_ACCESS_KEY="your_key"
+```
+
+Then use the Python API:
+
+```python
+from cosmo_engine.assets import AssetManager
+
+assets = AssetManager()
+results = assets.search("pexels", "mountain landscape", media_type="image", limit=5)
+local_path = assets.download(results[0])
+print(local_path)
+```
+
+See [docs/STAGE5_ASSETS.md](docs/STAGE5_ASSETS.md) for providers, cache layout, limits, and license notes. API keys must never be committed.
+
 ## Project format
 
 See docs/PROJECT_FORMAT.md and the sample projects in projects/templates/.
@@ -64,6 +89,7 @@ A successful local test suite does not replace a real FFmpeg render test on the 
 - AI-generated content is planned as data-only JSON; no AI output is executed as Python or shell.
 - FFmpeg is launched with a fixed argument list (no shell).
 - Project paths are resolved and checked before use.
+- Asset downloads require HTTPS, enforce media MIME types and byte limits, and stream to disk.
 - Rendering is sequential and memory-conscious.
 
 ## License
