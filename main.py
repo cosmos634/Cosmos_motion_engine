@@ -35,7 +35,7 @@ def load_project(path):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cosmo", description="Cosmo Motion Engine — Stage 3")
+    parser = argparse.ArgumentParser(prog="cosmo", description="Cosmo Motion Engine — Stage 4")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("info", help="show engine information")
     validate_cmd = sub.add_parser("validate", help="validate a JSON project")
@@ -47,7 +47,7 @@ def main():
 
     try:
         if args.command == "info":
-            print(f"Cosmo Motion Engine {__version__} | Stage 3")
+            print(f"Cosmo Motion Engine {__version__} | Stage 4")
             print("Python + Pillow + FFmpeg | JSON projects | sequential rendering")
             return 0
         project, project_dir = load_project(args.project) if args.command in ("validate", "render") else (None, None)
