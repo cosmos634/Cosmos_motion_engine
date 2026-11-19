@@ -19,7 +19,7 @@ def parse_color(value):
     return tuple(int(raw[i:i + 2], 16) for i in (0, 2, 4, 6))
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=3)
 def _load_image(path):
     with Image.open(path) as source:
         source.seek(0)
