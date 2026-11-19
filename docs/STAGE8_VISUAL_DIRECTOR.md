@@ -39,3 +39,16 @@ python main.py generate --prompt "Документальный ролик о т�
 python main.py validate projects/generated/project.json
 python main.py render projects/generated/project.json
 ```
+
+
+## Stage 8.2 — Professional composition
+
+Each scene containing text receives a restrained editorial composition:
+
+- A translucent dark panel sized around the headline and supporting copy
+- A vertical accent bar using the selected visual style's accent color
+- A Russian style label (for example, НАУЧНЫЙ ОБЗОР)
+- A sequential scene counter such as 01 / 04
+- Short opacity entrances using the existing animation engine
+
+All added layers are existing rect and text element types. No renderer changes, new dependencies, or additional media decoding are required. The Visual Director's applied flag prevents duplicate composition on repeated calls.
