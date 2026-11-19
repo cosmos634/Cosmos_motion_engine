@@ -2,7 +2,7 @@
 from pathlib import Path
 import math
 
-TOP_KEYS = {"version", "project", "scenes", "audio", "voiceover", "visual_style"}
+TOP_KEYS = {"version", "project", "scenes", "audio", "voiceover", "visual_style", "visual_director_applied"}
 PROJECT_KEYS = {"width", "height", "fps", "duration", "background"}
 SCENE_KEYS = {"id", "start", "duration", "elements", "transition_in"}
 ELEMENT_KEYS = {
@@ -55,7 +55,14 @@ def _color(value, name):
 
 def validate_project(data, project_dir=None):
     _keys(data, TOP_KEYS, TOP_KEYS - {"audio", "voiceover"}, "root")
-    if "visual_style" in data and data["visual_style"] not in {\n        "cinematic_documentary", "modern_motion_graphics", "social_media",\n        "historical_documentary", "scientific_visualization",\n    }:\n        raise ProjectValidationError("visual_style is not supported")\n    if "voiceover" in data and (
+    if "visual_style" in data and data["visual_style"] not in {
+        "cinematic_documentary", "modern_motion_graphics", "social_media",
+        "historical_documentary", "scientific_visualization",
+    }:
+        raise ProjectValidationError("visual_style is not supported")
+    if "visual_director_applied" in data and not isinstance(data["visual_director_applied"], bool):
+        raise ProjectValidationError("visual_director_applied must be boolean")
+    if "voiceover" in data and (
         not isinstance(data["voiceover"], str)
         or len(data["voiceover"].strip()) > 12000
     ):
