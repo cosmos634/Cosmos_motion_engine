@@ -8,7 +8,7 @@ A lightweight, JSON-driven video renderer designed for Python 3 and Android/Term
 
 **Stage 2 — animation engine: implemented.** Timeline interpolation, easing, and animated position, scale, rotation, and opacity for text and rectangle layers are included.
 
-**Stage 3 — audio engine: implemented, awaiting device verification.** Narration, music, and sound-effect tracks can be mixed with volume, start offsets, fades, and optional looping.
+**Stage 3 — audio engine: implemented and verified on the target Android device.** Narration, music, and sound-effect tracks can be mixed with volume, start offsets, fades, and optional looping.\n\n**Stage 4 — transition engine: implemented, awaiting device verification.** Fade, slide, wipe, and zoom transitions are available between overlapping scenes. Narration, music, and sound-effect tracks can be mixed with volume, start offsets, fades, and optional looping.
 
 Later stages will add transitions, image/video asset providers, Russian text-to-speech integrations, and Gemini/Groq project generation.
 
