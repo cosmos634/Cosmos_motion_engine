@@ -35,7 +35,7 @@ def load_project(path):
         for element in scene["elements"]:
             if element.get("font"):
                 element["font"] = _resolve_asset(element["font"], path.parent, "font")
-            if element.get("type") == "image":
+            if element.get("type") in {"image", "video"}:
                 element["source"] = _resolve_asset(element["source"], path.parent, "image source")
     return data, path.parent
 
