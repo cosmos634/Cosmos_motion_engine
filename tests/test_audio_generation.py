@@ -26,9 +26,13 @@ class AudioGenerationTests(unittest.TestCase):
     def test_creates_music_and_scene_effects_without_network(self):
         data = project()
         with tempfile.TemporaryDirectory() as directory:
-            tracks, warnings = create_audio_tracks(data, directory)
+            with patch(
+                "cosmo_engine.audio_generation._synthesize_edge_tts",
+                side_effect=RuntimeError("offline"),
+            ):
+                tracks, warnings = create_audio_tracks(data, directory)
             self.assertEqual([item["kind"] for item in tracks], ["music", "sfx"])
-            self.assertEqual(warnings, ["Russian TTS unavailable: No module named 'edge_tts'"] if False else warnings)
+            self.assertEqual(warnings, ["Russian TTS unavailable: offline"])
             for track in tracks:
                 self.assertTrue((Path(directory) / track["source"]).is_file())
             data["audio"] = tracks
