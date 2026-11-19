@@ -36,7 +36,7 @@ The JSON must follow this schema:
       "elements": [
         {
           "type": "text",
-          "text": "Example title",
+          "text": "Тайны космоса",
           "x": 80,
           "y": 300,
           "font_size": 72,
