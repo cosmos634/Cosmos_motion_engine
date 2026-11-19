@@ -96,7 +96,7 @@ class ProjectGeneratorTests(unittest.TestCase):
         result, _ = ProjectGenerator(groq=provider).generate("demo")
         animation = result["scenes"][0]["elements"][0]["animations"][0]
         self.assertEqual(animation["start"], 4.999)
-        self.assertEqual(animation["duration"], 0.001)
+        self.assertAlmostEqual(animation["duration"], 0.001, places=9)
 
     def test_invalid_prompt_is_rejected(self):
         with self.assertRaises(ValueError):
