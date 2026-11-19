@@ -1,4 +1,4 @@
-"""Strict validator for the Stage 4 JSON project format."""
+"""Strict validator for the Stage 5 JSON project format."""
 from pathlib import Path
 import math
 
@@ -8,6 +8,7 @@ SCENE_KEYS = {"id", "start", "duration", "elements", "transition_in"}
 ELEMENT_KEYS = {
     "text": {"type", "text", "x", "y", "font_size", "color", "font", "animations"},
     "rect": {"type", "x", "y", "width", "height", "color", "animations"},
+    "image": {"type", "source", "x", "y", "width", "height", "fit", "animations"},
 }
 ANIMATION_KEYS = {"property", "from", "to", "start", "duration", "easing"}
 ANIMATABLE = {"x", "y", "scale", "rotation", "opacity"}
@@ -103,8 +104,8 @@ def validate_project(data, project_dir=None):
                 raise ProjectValidationError(f"{ewhere} must be an object")
             etype = element.get("type")
             if not isinstance(etype, str) or etype not in ELEMENT_KEYS:
-                raise ProjectValidationError(f"{ewhere}.type must be text or rect")
-            required = ELEMENT_KEYS[etype] - {"font", "animations"}
+                raise ProjectValidationError(f"{ewhere}.type must be text, rect, or image")
+            required = ELEMENT_KEYS[etype] - {"font", "animations", "width", "height", "fit"}
             _keys(element, ELEMENT_KEYS[etype], required, ewhere)
             for key in ("x", "y"):
                 _number(element[key], f"{ewhere}.{key}")
