@@ -7,7 +7,7 @@ from .base import AIProviderError, BaseAIProvider
 
 class GroqProvider(BaseAIProvider):
     name = "groq"
-    DEFAULT_MODEL = "llama-3.3-70b-versatile"
+    DEFAULT_MODEL = "openai/gpt-oss-120b"
     ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 
     def __init__(self, api_key=None, model=None, timeout=45):
