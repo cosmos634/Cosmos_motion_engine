@@ -53,5 +53,30 @@ class ValidatorTests(unittest.TestCase):
             validate_project({**VALID, "scenes": [scene]})
 
 
+    def test_valid_audio_track(self):
+        track = {
+            "kind": "narration", "source": "voice.wav", "start": 0,
+            "duration": 1, "volume": 1, "loop": False,
+            "fade_in": 0.1, "fade_out": 0.2
+        }
+        self.assertTrue(validate_project({**VALID, "audio": [track]}))
+
+    def test_invalid_audio_kind_rejected(self):
+        track = {
+            "kind": "unknown", "source": "voice.wav", "start": 0,
+            "duration": 1, "volume": 1, "loop": False
+        }
+        with self.assertRaises(ProjectValidationError):
+            validate_project({**VALID, "audio": [track]})
+
+    def test_audio_volume_out_of_range_rejected(self):
+        track = {
+            "kind": "music", "source": "music.mp3", "start": 0,
+            "duration": 1, "volume": 3, "loop": True
+        }
+        with self.assertRaises(ProjectValidationError):
+            validate_project({**VALID, "audio": [track]})
+
+
 if __name__ == "__main__":
     unittest.main()
