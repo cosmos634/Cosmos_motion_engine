@@ -1,5 +1,6 @@
-"""Sequential Pillow frame rendering for Stage 1."""
+"""Sequential Pillow frame renderer with per-element animation."""
 from PIL import Image, ImageDraw, ImageFont
+from .animation import animated_value
 
 
 def parse_color(value):
@@ -17,29 +18,51 @@ def parse_color(value):
     return tuple(int(raw[i:i + 2], 16) for i in (0, 2, 4, 6))
 
 
+def _element_layer(element, font_path=None):
+    color = parse_color(element["color"])
+    if element["type"] == "rect":
+        layer = Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
+        return layer
+    try:
+        font = ImageFont.truetype(font_path, int(element["font_size"])) if font_path else ImageFont.load_default(size=int(element["font_size"]))
+    except (OSError, TypeError):
+        font = ImageFont.load_default()
+    probe = Image.new("RGBA", (1, 1))
+    box = ImageDraw.Draw(probe).textbbox((0, 0), element["text"], font=font)
+    width, height = max(1, box[2] - box[0]), max(1, box[3] - box[1])
+    layer = Image.new("RGBA", (width + 4, height + 4), (0, 0, 0, 0))
+    ImageDraw.Draw(layer).text((2 - box[0], 2 - box[1]), element["text"], fill=color, font=font)
+    return layer
+
+
 def render_frame(project, frame_index):
     settings = project["project"]
-    fps = settings["fps"]
-    timestamp = frame_index / fps
-    background = parse_color(settings["background"])
-    image = Image.new("RGBA", (settings["width"], settings["height"]), background)
-    draw = ImageDraw.Draw(image)
+    timestamp = frame_index / settings["fps"]
+    frame = Image.new("RGBA", (settings["width"], settings["height"]), parse_color(settings["background"]))
 
     for scene in project["scenes"]:
         if not (scene["start"] <= timestamp < scene["start"] + scene["duration"]):
             continue
+        scene_time = timestamp - scene["start"]
         for element in scene["elements"]:
-            color = parse_color(element["color"])
-            if element["type"] == "rect":
-                x, y = int(element["x"]), int(element["y"])
-                draw.rectangle((x, y, x + int(element["width"]) - 1,
-                                y + int(element["height"]) - 1), fill=color)
-            elif element["type"] == "text":
-                font_path = element.get("font")
-                try:
-                    font = ImageFont.truetype(font_path, int(element["font_size"])) if font_path else ImageFont.load_default(size=int(element["font_size"]))
-                except (OSError, TypeError):
-                    font = ImageFont.load_default()
-                draw.text((int(element["x"]), int(element["y"])), element["text"],
-                          fill=color, font=font)
-    return image.convert("RGB")
+            animations = element.get("animations", [])
+            x = animated_value(element["x"], animations, "x", scene_time)
+            y = animated_value(element["y"], animations, "y", scene_time)
+            scale = animated_value(1, animations, "scale", scene_time)
+            rotation = animated_value(0, animations, "rotation", scene_time)
+            opacity = animated_value(1, animations, "opacity", scene_time)
+
+            layer = _element_layer(element, element.get("font"))
+            new_size = (max(1, round(layer.width * scale)), max(1, round(layer.height * scale)))
+            if new_size != layer.size:
+                layer = layer.resize(new_size, Image.Resampling.BICUBIC)
+            if rotation:
+                before = layer.size
+                layer = layer.rotate(-rotation, expand=True, resample=Image.Resampling.BICUBIC)
+                x -= (layer.width - before[0]) / 2
+                y -= (layer.height - before[1]) / 2
+            if opacity < 1:
+                alpha = layer.getchannel("A").point(lambda a: round(a * opacity))
+                layer.putalpha(alpha)
+            frame.alpha_composite(layer, (round(x), round(y)))
+    return frame.convert("RGB")
