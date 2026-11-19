@@ -66,6 +66,7 @@ class _VideoReader:
         self.process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         self.frame_bytes = self.width * self.height * 4
         self.index = -1
+        self.last_raw = None
         self.ended = False
 
     def _read_frame(self):
@@ -89,6 +90,9 @@ class _VideoReader:
             if raw is None:
                 return None
             self.index += 1
+            self.last_raw = raw
+        if raw is None:
+            raw = self.last_raw
         return Image.frombytes("RGBA", (self.width, self.height), raw)
 
     def close(self):
