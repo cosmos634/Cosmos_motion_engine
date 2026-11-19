@@ -145,7 +145,7 @@ def validate_project(data, project_dir=None):
                             raise ProjectValidationError(f"{ewhere}.font path escapes project directory")
                         if not font_path.is_file():
                             raise ProjectValidationError(f"{ewhere}.font file not found")
-            else:
+            elif etype == "rect":
                 for key in ("width", "height"):
                     _number(element[key], f"{ewhere}.{key}", 1, 1920)
             animations = element.get("animations", [])
