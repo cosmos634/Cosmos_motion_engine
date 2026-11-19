@@ -54,7 +54,7 @@ def _color(value, name):
 
 
 def validate_project(data, project_dir=None):
-    _keys(data, TOP_KEYS, TOP_KEYS - {"audio", "voiceover"}, "root")
+    _keys(data, TOP_KEYS, TOP_KEYS - {"audio", "voiceover", "visual_style", "visual_director_applied"}, "root")
     if "visual_style" in data and data["visual_style"] not in {
         "cinematic_documentary", "modern_motion_graphics", "social_media",
         "historical_documentary", "scientific_visualization",
