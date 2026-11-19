@@ -2,7 +2,7 @@
 from pathlib import Path
 import math
 
-TOP_KEYS = {"version", "project", "scenes", "audio"}
+TOP_KEYS = {"version", "project", "scenes", "audio", "voiceover"}
 PROJECT_KEYS = {"width", "height", "fps", "duration", "background"}
 SCENE_KEYS = {"id", "start", "duration", "elements", "transition_in"}
 ELEMENT_KEYS = {
@@ -54,7 +54,12 @@ def _color(value, name):
 
 
 def validate_project(data, project_dir=None):
-    _keys(data, TOP_KEYS, TOP_KEYS - {"audio"}, "root")
+    _keys(data, TOP_KEYS, TOP_KEYS - {"audio", "voiceover"}, "root")
+    if "voiceover" in data and (
+        not isinstance(data["voiceover"], str)
+        or len(data["voiceover"].strip()) > 12000
+    ):
+        raise ProjectValidationError("voiceover must be a string up to 12000 characters")
     if data["version"] != 1:
         raise ProjectValidationError("version must be 1")
     p = data["project"]
