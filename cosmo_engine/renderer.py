@@ -1,5 +1,6 @@
 """Sequential Pillow frame renderer with per-element and scene transitions."""
 from functools import lru_cache
+from pathlib import Path
 import subprocess
 from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageOps
 from .animation import animated_value
@@ -136,8 +137,10 @@ def _element_layer(element, font_path=None, scene=None, scene_time=0, fps=24):
     color = parse_color(element["color"])
     if element["type"] == "rect":
         return Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
+    default_font = Path("/system/fonts/Roboto-Regular.ttf")
+    selected_font = font_path or (str(default_font) if default_font.is_file() else None)
     try:
-        font = ImageFont.truetype(font_path, int(element["font_size"])) if font_path else ImageFont.load_default(size=int(element["font_size"]))
+        font = ImageFont.truetype(selected_font, int(element["font_size"])) if selected_font else ImageFont.load_default()
     except (OSError, TypeError):
         font = ImageFont.load_default()
     probe = Image.new("RGBA", (1, 1))
