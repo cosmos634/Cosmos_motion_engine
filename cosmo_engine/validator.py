@@ -71,7 +71,7 @@ def validate_project(data, project_dir=None):
     ids = set()
     for i, scene in enumerate(data["scenes"]):
         where = f"scenes[{i}]"
-        _keys(scene, SCENE_KEYS, SCENE_KEYS, where)
+        _keys(scene, SCENE_KEYS, SCENE_KEYS - {"transition_in"}, where)
         if not isinstance(scene["id"], str) or not scene["id"]:
             raise ProjectValidationError(f"{where}.id must be a non-empty string")
         if scene["id"] in ids:
