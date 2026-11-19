@@ -4,6 +4,7 @@ import math
 import os
 import random
 import struct
+import subprocess
 import wave
 from pathlib import Path
 
@@ -61,6 +62,24 @@ async def _synthesize_edge_tts(text, destination):
     await communicate.save(str(destination))
 
 
+def _validate_mp3(path):
+    """Reject empty, truncated, or non-audio TTS responses using FFprobe."""
+    path = Path(path)
+    if not path.is_file() or path.stat().st_size < 1024:
+        raise RuntimeError("TTS returned an empty or suspiciously small MP3 file")
+    result = subprocess.run(
+        [
+            "ffprobe", "-v", "error", "-select_streams", "a:0",
+            "-show_entries", "stream=codec_name",
+            "-of", "default=noprint_wrappers=1:nokey=1", str(path),
+        ],
+        capture_output=True, text=True, timeout=30,
+    )
+    if result.returncode != 0 or "mp3" not in (result.stdout or "").lower():
+        detail = (result.stderr or result.stdout or "no MP3 audio stream detected").strip()
+        raise RuntimeError(f"TTS output is not a valid MP3: {detail[-500:]}")
+
+
 def create_audio_tracks(project, project_dir):
     """Create narration/music/SFX assets and return schema-compatible tracks."""
     settings = project["project"]
@@ -75,7 +94,7 @@ def create_audio_tracks(project, project_dir):
     _write_tone_bed(music_path, duration)
     tracks.append({
         "kind": "music", "source": str(music_path.relative_to(project_dir)),
-        "start": 0, "duration": duration, "volume": 0.22,
+        "start": 0, "duration": duration, "volume": 0.75,
         "fade_in": min(2.0, duration / 4), "fade_out": min(2.5, duration / 3),
         "loop": False,
     })
@@ -91,7 +110,7 @@ def create_audio_tracks(project, project_dir):
             continue
         tracks.append({
             "kind": "sfx", "source": str(whoosh_path.relative_to(project_dir)),
-            "start": start, "duration": effect_duration, "volume": 0.24,
+            "start": start, "duration": effect_duration, "volume": 0.65,
             "fade_in": 0.04, "fade_out": min(0.25, effect_duration / 2),
             "loop": False,
         })
@@ -99,18 +118,25 @@ def create_audio_tracks(project, project_dir):
     narration = project.get("voiceover", "").strip()
     if narration:
         voice_path = audio_dir / "narration_ru.mp3"
+        temp_voice_path = audio_dir / "narration_ru.tmp.mp3"
+        for stale_path in (voice_path, temp_voice_path):
+            if stale_path.exists():
+                stale_path.unlink()
         try:
-            asyncio.run(_synthesize_edge_tts(narration, voice_path))
-            if voice_path.is_file() and voice_path.stat().st_size > 0:
-                tracks.append({
-                    "kind": "narration", "source": str(voice_path.relative_to(project_dir)),
-                    "start": 0, "duration": duration, "volume": 1.0,
-                    "fade_in": 0.05, "fade_out": 0.15, "loop": False,
-                })
-            else:
-                warnings.append("Russian TTS returned an empty audio file")
+            asyncio.run(_synthesize_edge_tts(narration, temp_voice_path))
+            _validate_mp3(temp_voice_path)
+            temp_voice_path.replace(voice_path)
+            tracks.append({
+                "kind": "narration", "source": str(voice_path.relative_to(project_dir)),
+                "start": 0, "duration": duration, "volume": 1.0,
+                "fade_in": 0.05, "fade_out": 0.15, "loop": False,
+            })
         except Exception as exc:
-            warnings.append(f"Russian TTS unavailable: {exc}")
+            if temp_voice_path.exists():
+                temp_voice_path.unlink()
+            if voice_path.exists():
+                voice_path.unlink()
+            warnings.append(f"Russian TTS unavailable: {type(exc).__name__}: {exc}")
     else:
         warnings.append("No Russian voiceover text was supplied; narration was skipped")
     return tracks, warnings
