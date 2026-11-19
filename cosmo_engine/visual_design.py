@@ -1,4 +1,4 @@
-"""Optional stock-photo enrichment for generated projects."""
+"""Optional Pixabay stock-photo enrichment for generated projects."""
 from pathlib import Path
 import shutil
 
@@ -19,45 +19,40 @@ def _search_query(prompt):
 
 
 def add_visual_background(project, prompt, project_dir):
-    """Download one licensed-provider image and place it behind every scene.
+    """Download a Pixabay image and place it behind every scene.
 
-    Returns a short status string. Missing provider keys never prevent rendering.
+    Pixabay is the only provider used here. A missing key or failed request
+    never prevents text-based project generation.
     """
     manager = AssetManager()
-    if not manager.providers:
-        return "No stock provider configured; set PEXELS_API_KEY, PIXABAY_API_KEY, or UNSPLASH_ACCESS_KEY."
+    if "pixabay" not in manager.providers:
+        return "Pixabay is not configured; set PIXABAY_API_KEY."
     query = _search_query(prompt)
-    errors = []
-    for provider_name in ("pexels", "pixabay", "unsplash"):
-        if provider_name not in manager.providers:
-            continue
-        try:
-            results = manager.search(provider_name, query, "image", limit=5)
-            if not results:
-                continue
-            asset = results[0]
-            downloaded = manager.download(asset)
-            asset_dir = Path(project_dir) / "assets"
-            asset_dir.mkdir(parents=True, exist_ok=True)
-            suffix = downloaded.suffix.lower() or ".jpg"
-            target = asset_dir / f"ai_background{suffix}"
-            shutil.copy2(downloaded, target)
-            relative = target.relative_to(Path(project_dir)).as_posix()
-            for scene in project["scenes"]:
-                scene["elements"].insert(0, {
-                    "type": "image", "source": relative,
-                    "x": 0, "y": 0,
-                    "width": project["project"]["width"],
-                    "height": project["project"]["height"],
-                    "fit": "cover",
-                })
-                scene["elements"].insert(1, {
-                    "type": "rect", "x": 0, "y": 0,
-                    "width": project["project"]["width"],
-                    "height": project["project"]["height"],
-                    "color": "#07111F99",
-                })
-            return f"Background image added from {provider_name}."
-        except (AssetError, OSError, ValueError) as exc:
-            errors.append(f"{provider_name}: {exc}")
-    return "No stock image could be downloaded" + (": " + "; ".join(errors) if errors else ".")
+    try:
+        results = manager.search("pixabay", query, "image", limit=5)
+        if not results:
+            return f"No Pixabay images found for: {query}"
+        downloaded = manager.download(results[0])
+        project_dir = Path(project_dir)
+        asset_dir = project_dir / "assets"
+        asset_dir.mkdir(parents=True, exist_ok=True)
+        suffix = downloaded.suffix.lower() or ".jpg"
+        target = asset_dir / f"ai_background{suffix}"
+        shutil.copy2(downloaded, target)
+        relative = target.relative_to(project_dir).as_posix()
+        width = project["project"]["width"]
+        height = project["project"]["height"]
+        for scene in project["scenes"]:
+            scene["elements"].insert(0, {
+                "type": "image", "source": relative,
+                "x": 0, "y": 0, "width": width, "height": height,
+                "fit": "cover",
+            })
+            scene["elements"].insert(1, {
+                "type": "rect", "x": 0, "y": 0,
+                "width": width, "height": height,
+                "color": "#07111F99",
+            })
+        return "Background image added from Pixabay."
+    except (AssetError, OSError, ValueError) as exc:
+        return f"Pixabay image unavailable: {exc}"
