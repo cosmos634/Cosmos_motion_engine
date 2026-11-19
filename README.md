@@ -122,3 +122,10 @@ python main.py render projects/generated/space.json --output output/space.mp4
 ```
 
 The first AI stage generates text and rectangle layers only. Real image, video, and audio assets are added through the Stage 5 workflow. No new Python package is required.
+
+
+## Stage 8 — Visual Director
+
+The Visual Director selects a visual style for each generated video and applies renderer-compatible motion design. Supported styles: cinematic documentary, modern motion graphics, social media, historical documentary, and scientific visualization. It adds slow Ken Burns movement to image layers, staggered title entrances, and restrained accent graphics without adding heavy runtime dependencies.
+
+See [docs/STAGE8_VISUAL_DIRECTOR.md](docs/STAGE8_VISUAL_DIRECTOR.md).
