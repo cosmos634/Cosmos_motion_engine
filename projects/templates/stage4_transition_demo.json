@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "project": {
+    "width": 640,
+    "height": 360,
+    "fps": 24,
+    "duration": 5,
+    "background": "#101426"
+  },
+  "scenes": [
+    {
+      "id": "opening",
+      "start": 0,
+      "duration": 3.5,
+      "elements": [
+        {
+          "type": "rect",
+          "x": 55,
+          "y": 80,
+          "width": 530,
+          "height": 200,
+          "color": "#202D50"
+        },
+        {
+          "type": "text",
+          "text": "COSMO MOTION ENGINE",
+          "x": 100,
+          "y": 145,
+          "font_size": 28,
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "text": "Scene 1 - Before transition",
+          "x": 155,
+          "y": 205,
+          "font_size": 18,
+          "color": "#55DDF5"
+        }
+      ]
+    },
+    {
+      "id": "next_scene",
+      "start": 3,
+      "duration": 2,
+      "transition_in": {
+        "type": "wipe",
+        "duration": 0.5,
+        "direction": "left"
+      },
+      "elements": [
+        {
+          "type": "rect",
+          "x": 55,
+          "y": 80,
+          "width": 530,
+          "height": 200,
+          "color": "#49306F"
+        },
+        {
+          "type": "text",
+          "text": "STAGE 4",
+          "x": 235,
+          "y": 140,
+          "font_size": 34,
+          "color": "#FFFFFF"
+        },
+        {
+          "type": "text",
+          "text": "Transition Engine",
+          "x": 210,
+          "y": 205,
+          "font_size": 20,
+          "color": "#55DDF5"
+        }
+      ]
+    }
+  ]
+}
