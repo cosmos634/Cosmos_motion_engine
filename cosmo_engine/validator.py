@@ -2,7 +2,7 @@
 from pathlib import Path
 import math
 
-TOP_KEYS = {"version", "project", "scenes"}
+TOP_KEYS = {"version", "project", "scenes", "audio"}
 PROJECT_KEYS = {"width", "height", "fps", "duration", "background"}
 SCENE_KEYS = {"id", "start", "duration", "elements"}
 ELEMENT_KEYS = {
@@ -13,6 +13,8 @@ ANIMATION_KEYS = {"property", "from", "to", "start", "duration", "easing"}
 ANIMATABLE = {"x", "y", "scale", "rotation", "opacity"}
 EASINGS = {"linear", "ease_in", "ease_out", "ease_in_out"}
 COLORS = {"black", "white", "red", "green", "blue", "yellow", "transparent"}
+AUDIO_KEYS = {"kind", "source", "start", "duration", "volume", "fade_in", "fade_out", "loop"}
+AUDIO_KINDS = {"narration", "music", "sfx"}
 
 
 class ProjectValidationError(ValueError):
@@ -50,7 +52,7 @@ def _color(value, name):
 
 
 def validate_project(data, project_dir=None):
-    _keys(data, TOP_KEYS, TOP_KEYS, "root")
+    _keys(data, TOP_KEYS, TOP_KEYS - {"audio"}, "root")
     if data["version"] != 1:
         raise ProjectValidationError("version must be 1")
     p = data["project"]
@@ -135,4 +137,27 @@ def validate_project(data, project_dir=None):
                     raise ProjectValidationError(f"{awhere}: scale values must be positive")
                 if prop == "opacity" and (not 0 <= animation["from"] <= 1 or not 0 <= animation["to"] <= 1):
                     raise ProjectValidationError(f"{awhere}: opacity values must be between 0 and 1")
+    audio = data.get("audio", [])
+    if not isinstance(audio, list):
+        raise ProjectValidationError("audio must be an array")
+    for i, track in enumerate(audio):
+        where = f"audio[{i}]"
+        required = {"kind", "source", "start", "duration", "volume", "loop"}
+        _keys(track, AUDIO_KEYS, required, where)
+        if track["kind"] not in AUDIO_KINDS:
+            raise ProjectValidationError(f"{where}.kind must be narration, music, or sfx")
+        if not isinstance(track["source"], str) or not track["source"]:
+            raise ProjectValidationError(f"{where}.source must be a non-empty path")
+        _number(track["start"], f"{where}.start", 0)
+        _number(track["duration"], f"{where}.duration", 0.001)
+        if track["start"] >= p["duration"]:
+            raise ProjectValidationError(f"{where}.start must be before project end")
+        _number(track["volume"], f"{where}.volume", 0, 2)
+        for fade in ("fade_in", "fade_out"):
+            if fade in track:
+                _number(track[fade], f"{where}.{fade}", 0)
+                if track[fade] > track["duration"]:
+                    raise ProjectValidationError(f"{where}.{fade} cannot exceed track duration")
+        if not isinstance(track["loop"], bool):
+            raise ProjectValidationError(f"{where}.loop must be boolean")
     return True
