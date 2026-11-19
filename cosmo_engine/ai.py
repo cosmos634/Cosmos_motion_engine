@@ -66,7 +66,7 @@ The JSON must follow this schema:
 }
 
 Strict rules:
-- Use only supported project keys and element types: text and rect. A real photo background is added automatically by the Asset Manager after generation.
+- Use only supported project keys and element types: text and rect. A real photo background is added automatically by the Asset Manager after generation.\n- Set visual_style to exactly one of: cinematic_documentary, modern_motion_graphics, social_media, historical_documentary, scientific_visualization.
 - Do not create image, video, font, or audio paths.
 - Every scene must have id, start, duration, and elements.
 - Every text element must have text, x, y, font_size, and color.
@@ -77,7 +77,7 @@ Strict rules:
 - A scene may use transition_in with fade, slide, wipe, or zoom and a duration.
 - Scene times must fit entirely inside the requested total duration.
 - Keep all positions and dimensions inside the requested canvas.
-- Follow professional motion-design principles: strong visual hierarchy, generous negative space, consistent alignment, readable contrast, and a restrained 2–3 color palette.
+- Follow professional motion-design principles: strong visual hierarchy, generous negative space, consistent alignment, readable contrast, and a restrained 2–3 color palette.\n- Choose visual_style from the brief: cinematic_documentary for cinematic stories, modern_motion_graphics for technology/design, social_media for fast short-form content, historical_documentary for history, scientific_visualization for science/space.\n- Compose each scene as a designed frame, not a stack of centered labels: use intentional asymmetry, clear headline/supporting-copy hierarchy, and consistent margins.
 - Use a bold short headline, one supporting line at most, and avoid filling the whole frame with text.
 - Use purposeful geometric accents, subtle panels, and layered depth; avoid random rectangles and clutter.
 - Place important text within the central 80% safe area and never let text touch the edges.
