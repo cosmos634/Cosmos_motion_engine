@@ -31,7 +31,7 @@ Project files are UTF-8 JSON. Unsupported keys are rejected to catch mistakes ea
 - Width/height are positive integers up to 1920; FPS is a positive integer.
 - Duration is in seconds. Scenes must fit inside the project duration.
 - Scene `start` and animation `start` are relative to the project and scene respectively.
-- Text and rect elements are supported. Images, video, audio and transitions are not implemented yet.
+- Text and rect elements are supported. Image/video layers and transitions are planned for later stages.
 - Text font paths are relative to the JSON file's directory and cannot escape it.
 
 ## Animation tracks
