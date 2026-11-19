@@ -102,3 +102,23 @@ No license has been selected yet. Until one is added, do not assume the reposito
 ### Stage 5.3 — Video layers
 
 Video elements are decoded sequentially with persistent FFmpeg readers and composited per frame. They support project-relative sources, clip start/duration, source seek, contain/cover/stretch fitting, transforms, opacity, and existing animation tracks. The encoder closes decoder processes after each render.
+
+
+## AI Project Generator (Stage 6)
+
+Configure one or both providers:
+
+```bash
+export GEMINI_API_KEY="your_gemini_key"
+export GROQ_API_KEY="your_groq_key"
+```
+
+Generate a project (Gemini first, Groq fallback):
+
+```bash
+python main.py generate --prompt "Создай динамичный ролик о космосе" --output projects/generated/space.json
+python main.py validate projects/generated/space.json
+python main.py render projects/generated/space.json --output output/space.mp4
+```
+
+The first AI stage generates text and rectangle layers only. Real image, video, and audio assets are added through the Stage 5 workflow. No new Python package is required.
