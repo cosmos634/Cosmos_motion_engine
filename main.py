@@ -19,6 +19,10 @@ def load_project(path):
     except json.JSONDecodeError as exc:
         raise ProjectValidationError(f"invalid JSON: {exc}") from exc
     validate_project(data, path.parent)
+    for scene in data["scenes"]:
+        for element in scene["elements"]:
+            if element.get("font"):
+                element["font"] = str((path.parent / element["font"]).resolve())
     return data, path.parent
 
 
