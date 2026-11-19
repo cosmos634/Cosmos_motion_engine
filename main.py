@@ -12,6 +12,7 @@ from cosmo_engine.encoder import encode_frames
 from cosmo_engine.audio import mux_audio
 from cosmo_engine.renderer import render_frame
 from cosmo_engine.validator import ProjectValidationError, validate_project
+from cosmo_engine.visual_design import add_visual_background
 
 
 def _resolve_asset(source, project_dir, label):
@@ -63,6 +64,7 @@ def main():
     generate_cmd.add_argument("--height", type=int, default=1920)
     generate_cmd.add_argument("--fps", type=int, default=30)
     generate_cmd.add_argument("--duration", type=float, default=20)
+    generate_cmd.add_argument("--no-visuals", action="store_true", help="skip automatic stock background search")
 
     args = parser.parse_args()
 
@@ -83,6 +85,10 @@ def main():
             )
             output = Path(args.output).expanduser().resolve()
             output.parent.mkdir(parents=True, exist_ok=True)
+            if not args.no_visuals:
+                visual_status = add_visual_background(project, args.prompt, output.parent)
+                print(visual_status)
+                validate_project(project, output.parent)
             output.write_text(
                 json.dumps(project, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
