@@ -21,9 +21,9 @@ export GROQ_MODEL="openai/gpt-oss-120b"
 
 ## Automatic Pixabay visuals and design
 
-AI generation uses a visual-design brief (hierarchy, spacing, contrast, restrained palette). When `PIXABAY_API_KEY` is configured, the generator searches Pixabay for a relevant image, downloads it through the Stage 5 Asset Manager, stores it beside the generated JSON under `assets/`, and adds it behind each scene with a dark readability overlay.
+AI generation uses a visual-design brief (hierarchy, spacing, contrast, restrained palette). When `PIXABAY_API_KEY` is configured, the generator searches Pixabay separately for each scene, using that scene's text to identify a subject where possible. It downloads the selected images through the Stage 5 Asset Manager, stores them beside the generated JSON under `assets/`, and adds one image per scene with a dark readability overlay.
 
-If the key is missing or Pixabay search/download fails, generation still succeeds without a background. Use `--no-visuals` to skip stock-image search.
+For broad topics such as space, scenes without a specific subject rotate through different search themes (Earth, astronauts, galaxies, the Moon, nebulae, rockets, the Sun, and stars). Search results are de-duplicated across scenes when alternatives are available. If an individual search or download fails, the remaining scenes continue; generation still succeeds without stock backgrounds if Pixabay is unavailable. Use `--no-visuals` to skip stock-image search.
 
 ## Generate a project
 
