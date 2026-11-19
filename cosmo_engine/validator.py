@@ -106,10 +106,31 @@ def validate_project(data, project_dir=None):
             if not isinstance(etype, str) or etype not in ELEMENT_KEYS:
                 raise ProjectValidationError(f"{ewhere}.type must be text, rect, or image")
             required = ELEMENT_KEYS[etype] - {"font", "animations", "width", "height", "fit"}
+            if etype == "image":
+                required = {"type", "source", "x", "y"}
+                if ("width" in element) != ("height" in element):
+                    raise ProjectValidationError(f"{ewhere} width and height must be supplied together")
             _keys(element, ELEMENT_KEYS[etype], required, ewhere)
             for key in ("x", "y"):
                 _number(element[key], f"{ewhere}.{key}")
-            _color(element["color"], f"{ewhere}.color")
+            if etype == "image":
+                source = element["source"]
+                if not isinstance(source, str) or not source:
+                    raise ProjectValidationError(f"{ewhere}.source must be a non-empty path")
+                if project_dir is not None:
+                    base = Path(project_dir).resolve()
+                    image_path = (base / source).resolve()
+                    if base not in image_path.parents:
+                        raise ProjectValidationError(f"{ewhere}.source path escapes project directory")
+                    if not image_path.is_file():
+                        raise ProjectValidationError(f"{ewhere}.source file not found")
+                if "width" in element:
+                    for key in ("width", "height"):
+                        _number(element[key], f"{ewhere}.{key}", 1, 1920)
+                if element.get("fit", "contain") not in {"contain", "cover", "stretch"}:
+                    raise ProjectValidationError(f"{ewhere}.fit must be contain, cover, or stretch")
+            else:
+                _color(element["color"], f"{ewhere}.color")
             if etype == "text":
                 if not isinstance(element["text"], str):
                     raise ProjectValidationError(f"{ewhere}.text must be a string")
