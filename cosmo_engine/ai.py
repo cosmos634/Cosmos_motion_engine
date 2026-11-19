@@ -28,6 +28,7 @@ The JSON must follow this schema:
     "background": "#101426"
   },
   "voiceover": "Полный связный текст дикторской речи на русском языке.",
+  "visual_style": "cinematic_documentary",
   "scenes": [
     {
       "id": "scene_1",
