@@ -45,6 +45,80 @@ def _image_layer(element):
     return result
 
 
+def _font_for_size(selected_font, size):
+    try:
+        return ImageFont.truetype(selected_font, size) if selected_font else ImageFont.load_default()
+    except (OSError, TypeError):
+        return ImageFont.load_default()
+
+
+def _wrap_text(text, font, max_width, draw):
+    """Wrap words to a measured pixel width, splitting unusually long tokens."""
+    lines = []
+    for paragraph in str(text).splitlines() or [""]:
+        words = paragraph.split()
+        if not words:
+            lines.append("")
+            continue
+        current = ""
+        for word in words:
+            candidate = word if not current else current + " " + word
+            if draw.textlength(candidate, font=font) <= max_width:
+                current = candidate
+                continue
+            if current:
+                lines.append(current)
+                current = ""
+            if draw.textlength(word, font=font) <= max_width:
+                current = word
+                continue
+            piece = ""
+            for char in word:
+                if piece and draw.textlength(piece + char, font=font) > max_width:
+                    lines.append(piece)
+                    piece = char
+                else:
+                    piece += char
+            current = piece
+        if current:
+            lines.append(current)
+    return lines or [""]
+
+
+def _text_layer(element, font_path, canvas_width, canvas_height):
+    """Render wrapped text inside a safe box and shrink it only when necessary."""
+    x, y = int(element["x"]), int(element["y"])
+    safe_x = max(16, round(canvas_width * 0.055))
+    safe_y = max(16, round(canvas_height * 0.035))
+    max_width = int(element.get("max_width", canvas_width - x - safe_x))
+    max_height = int(element.get("max_height", canvas_height - y - safe_y))
+    max_width = max(1, min(canvas_width, max_width))
+    max_height = max(1, min(canvas_height, max_height))
+    align = element.get("align", "left")
+    requested_size = int(element["font_size"])
+    size = requested_size
+    probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
+    spacing = max(2, round(size * 0.22))
+
+    while True:
+        font = _font_for_size(font_path, size)
+        lines = _wrap_text(element["text"], font, max_width, probe)
+        spacing = max(2, round(size * 0.22))
+        bounds = probe.multiline_textbbox((0, 0), "\n".join(lines), font=font, spacing=spacing, align=align)
+        text_height = max(1, bounds[3] - bounds[1])
+        if text_height <= max_height or size <= 8:
+            break
+        size = max(8, size - max(1, round(size * 0.06)))
+
+    layer = Image.new("RGBA", (max_width, min(max_height, text_height + 4)), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    draw.multiline_text(
+        (0, 2 - bounds[1]), "\n".join(lines), fill=parse_color(element["color"]),
+        font=font, spacing=spacing, align=align,
+    )
+    return layer
+
+
 _VIDEO_READERS = {}
 
 
@@ -129,26 +203,16 @@ def _video_layer(element, scene, scene_time, fps):
     return frame if frame is not None else Image.new("RGBA", (element["width"], element["height"]), (0, 0, 0, 0))
 
 
-def _element_layer(element, font_path=None, scene=None, scene_time=0, fps=24):
+def _element_layer(element, font_path=None, scene=None, scene_time=0, fps=24, canvas_size=None):
     if element["type"] == "image":
         return _image_layer(element)
     if element["type"] == "video":
         return _video_layer(element, scene, scene_time, fps)
+    if element["type"] == "text":
+        canvas_width, canvas_height = canvas_size or (1920, 1920)
+        return _text_layer(element, font_path, canvas_width, canvas_height)
     color = parse_color(element["color"])
-    if element["type"] == "rect":
-        return Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
-    default_font = Path("/system/fonts/Roboto-Regular.ttf")
-    selected_font = font_path or (str(default_font) if default_font.is_file() else None)
-    try:
-        font = ImageFont.truetype(selected_font, int(element["font_size"])) if selected_font else ImageFont.load_default()
-    except (OSError, TypeError):
-        font = ImageFont.load_default()
-    probe = Image.new("RGBA", (1, 1))
-    box = ImageDraw.Draw(probe).textbbox((0, 0), element["text"], font=font)
-    width, height = max(1, box[2] - box[0]), max(1, box[3] - box[1])
-    layer = Image.new("RGBA", (width + 4, height + 4), (0, 0, 0, 0))
-    ImageDraw.Draw(layer).text((2 - box[0], 2 - box[1]), element["text"], fill=color, font=font)
-    return layer
+    return Image.new("RGBA", (int(element["width"]), int(element["height"])), color)
 
 
 def apply_transition(layer, transition, progress):
@@ -188,7 +252,7 @@ def apply_transition(layer, transition, progress):
         elif direction == "up":
             edge = round(height * (1 - progress))
             draw.rectangle((0, 0, width, edge), fill=255)
-        else:  # down
+        else:
             draw.rectangle((0, round(height * (1 - progress)), width, height), fill=255)
         result = layer.copy()
         result.putalpha(ImageChops.multiply(result.getchannel("A"), mask))
@@ -225,7 +289,10 @@ def render_frame(project, frame_index):
             rotation = animated_value(0, animations, "rotation", scene_time)
             opacity = animated_value(1, animations, "opacity", scene_time)
 
-            layer = _element_layer(element, element.get("font"), scene, scene_time, settings["fps"])
+            layer = _element_layer(
+                element, element.get("font"), scene, scene_time, settings["fps"],
+                canvas_size=(width, height),
+            )
             new_size = (max(1, round(layer.width * scale)), max(1, round(layer.height * scale)))
             if new_size != layer.size:
                 layer = layer.resize(new_size, Image.Resampling.BICUBIC)

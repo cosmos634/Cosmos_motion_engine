@@ -48,31 +48,37 @@ def _fade(element, duration, target=1):
 
 
 def _add_scene_composition(elements, texts, width, height, accent, label, scene_number, scene_count, entrance):
-    """Build a restrained editorial title card using existing rect/text layers."""
+    """Add a compact editorial card rather than a full-width empty slab."""
     title = texts[0]
     title_y = int(title.get("y", round(height * 0.56)))
-    margin = max(8, round(width * 0.055))
+    margin = max(12, round(width * 0.055))
     title_x = int(title.get("x", margin + 12))
-    panel_x = max(0, min(title_x - max(12, round(width * 0.025)), width - margin))
-    panel_width = max(1, width - margin - panel_x)
+    title_size = int(title.get("font_size", 24))
+    side_pad = max(20, round(width * 0.035))
+    # Approximate text width conservatively; the renderer performs the real wrapping.
+    estimated_title_width = min(width * 0.82, len(str(title.get("text", ""))) * title_size * 0.58)
+    panel_width = min(width - margin * 2, max(round(width * 0.48), round(estimated_title_width + side_pad * 2)))
+    panel_x = max(margin, min(title_x - side_pad, width - margin - panel_width))
 
-    text_bottom = title_y + int(title.get("font_size", 24) * 1.35)
+    text_bottom = title_y + int(title_size * 1.35)
     for item in texts[1:3]:
         item_y = int(item.get("y", text_bottom))
         text_bottom = max(text_bottom, item_y + int(item.get("font_size", 20) * 1.4))
 
-    panel_top = max(0, title_y - max(24, round(height * 0.075)))
-    panel_bottom = min(height, max(text_bottom + max(12, round(height * 0.025)), panel_top + max(72, round(height * 0.16))))
+    top_pad = max(12, round(height * 0.018))
+    label_height = max(16, round(height * 0.014))
+    panel_top = max(0, title_y - top_pad - label_height - max(10, round(height * 0.018)))
+    panel_bottom = min(height, text_bottom + max(16, round(height * 0.025)))
     panel_height = max(1, panel_bottom - panel_top)
 
     panel = {
         "type": "rect", "x": panel_x, "y": panel_top,
         "width": panel_width, "height": panel_height,
-        "color": "#071321E8",
+        "color": "#071321B8",
     }
-    _fade(panel, entrance, 0.92)
+    _fade(panel, entrance, 0.88)
 
-    bar_width = max(3, round(width * 0.008))
+    bar_width = max(3, round(width * 0.007))
     accent_bar = {
         "type": "rect", "x": panel_x, "y": panel_top,
         "width": bar_width, "height": panel_height, "color": accent,
@@ -81,11 +87,10 @@ def _add_scene_composition(elements, texts, width, height, accent, label, scene_
 
     additions = [panel, accent_bar]
     if height >= 480:
-        small_size = max(12, min(28, round(height * 0.014)))
-        top_pad = max(12, round(height * 0.018))
+        small_size = max(12, min(26, round(height * 0.013)))
         kicker = {
             "type": "text", "text": label,
-            "x": panel_x + max(14, round(width * 0.025)),
+            "x": panel_x + side_pad,
             "y": panel_top + top_pad,
             "font_size": small_size, "color": accent,
         }
@@ -93,10 +98,9 @@ def _add_scene_composition(elements, texts, width, height, accent, label, scene_
         additions.append(kicker)
 
         counter_text = f"{scene_number:02d} / {scene_count:02d}"
-        counter_width = max(64, round(width * 0.12))
         counter = {
             "type": "text", "text": counter_text,
-            "x": max(panel_x + bar_width + 8, panel_x + panel_width - counter_width),
+            "x": max(panel_x + bar_width + 8, panel_x + panel_width - side_pad - 100),
             "y": panel_top + top_pad,
             "font_size": small_size, "color": "#FFFFFF",
         }
